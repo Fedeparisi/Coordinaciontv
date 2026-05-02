@@ -1,7 +1,7 @@
 ﻿import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { 
-  MapPin, Calendar, AlertCircle, Truck, Filter, Map as MapIcon, 
-  Clock, User, Hash, CheckCircle, Download, Cloud, CloudOff, 
+import {
+  MapPin, Calendar, AlertCircle, Truck, Filter, Map as MapIcon,
+  Clock, User, Hash, CheckCircle, Download, Cloud, CloudOff,
   Loader2, Navigation, LogOut, Monitor, Smartphone, ChevronRight,
   Play, ChevronDown, ChevronUp, FileText, Package, X, Upload,
   Printer, RefreshCw, PhoneCall, MessageCircle, Lock, KeyRound, Trash2, Settings, Camera, UserX,
@@ -13,12 +13,12 @@ import { getFirestore, collection, doc, onSnapshot, setDoc, updateDoc, deleteDoc
 
 // --- 1. CONFIGURACIÓN FIREBASE ---
 const firebaseConfig = {
-    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-    appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -43,11 +43,11 @@ const getMovilColor = (movil) => {
 // Generador de HTML para el Mapa Real con Leaflet
 const generateMapHTML = (tasks, drawRoute = false, movilesList = ['MÓVIL 1', 'MÓVIL 2', 'MÓVIL 3', 'MÓVIL 4']) => {
   const allMoviles = ['SIN ASIGNAR', ...movilesList];
-  
+
   const markers = tasks.map(t => {
     let color = '#94a3b8'; // gris
     let extraCss = '';
-    
+
     if (t.estado === 'FINALIZADA') {
       color = '#3b82f6'; // azul
     } else if (t.estado === 'EN CURSO') {
@@ -64,7 +64,7 @@ const generateMapHTML = (tasks, drawRoute = false, movilesList = ['MÓVIL 1', 'M
     const cliente = (t.cliente || '').replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/`/g, '\\`');
     const direccion = (t.direccion || '').replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/`/g, '\\`');
 
-    if(isNaN(t.lat) || isNaN(t.lng) || t.lat === 0 || t.lng === 0) return '';
+    if (isNaN(t.lat) || isNaN(t.lng) || t.lat === 0 || t.lng === 0) return '';
 
     const movilesOptions = allMoviles.map(m =>
       `<option value="${m}" ${t.movil === m ? 'selected' : ''}>${m}</option>`
@@ -230,15 +230,15 @@ const generateMapHTML = (tasks, drawRoute = false, movilesList = ['MÓVIL 1', 'M
 // ==========================================
 function AdminDashboard({ tasks, onUpdateTask, syncStatus, onLogout, isTimeTrackingEnabled, movilesList, adminTitle, onSaveForm }) {
   const [filterMovil, setFilterMovil] = useState('TODOS');
-  const [filterTipo, setFilterTipo] = useState('RECLAMO'); 
-  const [sortOrder, setSortOrder] = useState('asc'); 
+  const [filterTipo, setFilterTipo] = useState('RECLAMO');
+  const [sortOrder, setSortOrder] = useState('asc');
   const [selectedMapTask, setSelectedMapTask] = useState(null);
   const [isImporting, setIsImporting] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [clearType, setClearType] = useState('ALL');
   const [isClearing, setIsClearing] = useState(false);
   const [isExportingPDF, setIsExportingPDF] = useState(false);
-  
+
   const allMoviles = ['SIN ASIGNAR', ...movilesList];
 
   // Estados para Asignación Masiva
@@ -269,7 +269,7 @@ function AdminDashboard({ tasks, onUpdateTask, syncStatus, onLogout, isTimeTrack
   const filteredAndSortedTasks = useMemo(() => {
     let result = [...tasks];
     if (filterMovil !== 'TODOS') result = result.filter(task => task.movil === filterMovil);
-    
+
     if (filterTipo === 'FINALIZADAS') {
       result = result.filter(task => task.estado === 'FINALIZADA');
     } else if (filterTipo !== 'TODOS') {
@@ -324,10 +324,10 @@ function AdminDashboard({ tasks, onUpdateTask, syncStatus, onLogout, isTimeTrack
         return `${hrs}h ${mins}m`;
       };
 
-      const tableColumn = isTimeTrackingEnabled 
+      const tableColumn = isTimeTrackingEnabled
         ? ["Móvil Asignado", "N° Abonado", "Cliente", "Tipo Tarea", "Estado", "Tiempo", "Dirección"]
         : ["Móvil Asignado", "N° Abonado", "Cliente", "Tipo Tarea", "Estado", "Dirección"];
-      
+
       const sortedTasks = [...tasks].sort((a, b) => {
         if (a.movil !== b.movil) return a.movil.localeCompare(b.movil);
         if (a.tipo !== b.tipo) return a.tipo.localeCompare(b.tipo);
@@ -341,10 +341,10 @@ function AdminDashboard({ tasks, onUpdateTask, syncStatus, onLogout, isTimeTrack
         }
 
         const row = [
-          t.movil, 
-          t.nroCliente, 
-          t.cliente, 
-          t.tipo, 
+          t.movil,
+          t.nroCliente,
+          t.cliente,
+          t.tipo,
           estadoDisplay
         ];
 
@@ -363,25 +363,25 @@ function AdminDashboard({ tasks, onUpdateTask, syncStatus, onLogout, isTimeTrack
         theme: 'striped',
         headStyles: { fillColor: [79, 70, 229] },
         styles: { fontSize: 9, cellPadding: 3 },
-        columnStyles: isTimeTrackingEnabled ? { 
-          0: { fontStyle: 'bold', cellWidth: 32 }, 
+        columnStyles: isTimeTrackingEnabled ? {
+          0: { fontStyle: 'bold', cellWidth: 32 },
           3: { cellWidth: 30 },
           4: { fontStyle: 'bold', cellWidth: 25 },
-          5: { fontStyle: 'italic', cellWidth: 18 } 
+          5: { fontStyle: 'italic', cellWidth: 18 }
         } : {
-          0: { fontStyle: 'bold', cellWidth: 32 }, 
+          0: { fontStyle: 'bold', cellWidth: 32 },
           3: { cellWidth: 30 },
           4: { fontStyle: 'bold', cellWidth: 25 }
         }
       });
 
       doc.setFontSize(10);
-      doc.setTextColor(148, 163, 184); 
-      doc.text(`Centro Operativo Alta Gracia - Generado por Sistema Gestor de Tareas`, 14, doc.internal.pageSize.height - 10);
-      
+      doc.setTextColor(148, 163, 184);
+      doc.text(`Centro Operativo Alta Gracia - Generado por Sistema Gestor de Tareas!`, 14, doc.internal.pageSize.height - 10);
+
       const fileName = `Reporte_General_${new Date().toLocaleDateString('es-AR').replace(/\//g, '-')}.pdf`;
       doc.save(fileName);
-      
+
       // Guardar formulario
       onSaveForm('REPORTE GENERAL', 'Coordinador', {
         totalTareas: tasks.length
@@ -421,7 +421,7 @@ function AdminDashboard({ tasks, onUpdateTask, syncStatus, onLogout, isTimeTrack
         const headerLine = lines[0];
         const separador = (headerLine.split(';').length > headerLine.split(',').length) ? ';' : ',';
         const headers = headerLine.split(separador).map(h => h.replace(/^"|"$/g, '').trim().toUpperCase());
-        
+
         const idx = {
           id: headers.indexOf('NROORDEN'),
           nroCliente: headers.indexOf('NROCLIENTE'),
@@ -493,7 +493,7 @@ function AdminDashboard({ tasks, onUpdateTask, syncStatus, onLogout, isTimeTrack
             demora: idx.demora !== -1 ? parseInt(values[idx.demora]) || 0 : 0,
             reagendos: idx.reagendos !== -1 ? parseInt(values[idx.reagendos]) || 0 : 0,
             movil: (idx.movil_elegido !== -1 && values[idx.movil_elegido]) ? values[idx.movil_elegido] : 'SIN ASIGNAR',
-            rawData: rawData 
+            rawData: rawData
           };
 
           await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'tareas', task.id), task);
@@ -504,15 +504,15 @@ function AdminDashboard({ tasks, onUpdateTask, syncStatus, onLogout, isTimeTrack
       alert("Hubo un error procesando el archivo CSV.");
     } finally {
       setIsImporting(false);
-      if(fileInputRef.current) fileInputRef.current.value = "";
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
   const handleClearDatabase = async () => {
     setIsClearing(true);
     try {
-      const tasksToDelete = clearType === 'ALL' 
-        ? tasks 
+      const tasksToDelete = clearType === 'ALL'
+        ? tasks
         : tasks.filter(t => t.tipo === clearType);
 
       for (const task of tasksToDelete) {
@@ -534,7 +534,7 @@ function AdminDashboard({ tasks, onUpdateTask, syncStatus, onLogout, isTimeTrack
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-900 w-full animate-in fade-in relative">
-      
+
       {/* Toast Notification para Asignación Masiva Vacía */}
       {toastMsg && (
         <div className="fixed bottom-6 right-6 bg-slate-800 text-white px-5 py-3 rounded-xl shadow-2xl z-50 animate-in slide-in-from-bottom-5">
@@ -564,19 +564,19 @@ function AdminDashboard({ tasks, onUpdateTask, syncStatus, onLogout, isTimeTrack
               <option value="SIN ASIGNAR">Desasignar (SIN ASIGNAR)</option>
             </select>
             <div className="flex gap-3">
-              <button 
-                onClick={() => setBulkSelectedTasks([])} 
+              <button
+                onClick={() => setBulkSelectedTasks([])}
                 className="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 py-3 rounded-xl font-bold transition-colors"
               >
                 Cancelar
               </button>
-              <button 
+              <button
                 onClick={async () => {
                   await Promise.all(bulkSelectedTasks.map(id => onUpdateTask(id, 'movil', bulkAssignMovil)));
                   setBulkSelectedTasks([]);
                   setToastMsg(`¡${bulkSelectedTasks.length} tareas asignadas con éxito!`);
                   setTimeout(() => setToastMsg(''), 3000);
-                }} 
+                }}
                 className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl font-bold transition-colors shadow-md"
               >
                 Confirmar
@@ -600,7 +600,7 @@ function AdminDashboard({ tasks, onUpdateTask, syncStatus, onLogout, isTimeTrack
             <Trash2 className="w-12 h-12 text-red-500 mx-auto mb-4" />
             <h3 className="text-lg font-bold text-slate-800 mb-2">¿Limpiar base de datos?</h3>
             <p className="text-sm text-slate-500 mb-4">Selecciona qué datos deseas eliminar. Esta acción no se puede deshacer.</p>
-            
+
             <select
               value={clearType}
               onChange={(e) => setClearType(e.target.value)}
@@ -637,7 +637,7 @@ function AdminDashboard({ tasks, onUpdateTask, syncStatus, onLogout, isTimeTrack
               <Upload className="w-4 h-4" /> <span className="hidden sm:inline">Cargar CSV</span>
             </button>
             <button onClick={handleExportPDF} disabled={isExportingPDF} className={`px-3 py-2 rounded-lg flex items-center gap-2 border transition-colors shadow-sm ${isExportingPDF ? 'bg-indigo-400 border-indigo-300 text-indigo-100 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-500 text-white border-indigo-400'}`}>
-              {isExportingPDF ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />} 
+              {isExportingPDF ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
               <span className="hidden sm:inline">{isExportingPDF ? 'Generando...' : 'Exportar PDF'}</span>
             </button>
             <button onClick={onLogout} className="bg-slate-800 hover:bg-slate-900 text-white px-3 py-2 rounded-lg flex items-center gap-2 transition-colors shadow-sm">
@@ -651,8 +651,8 @@ function AdminDashboard({ tasks, onUpdateTask, syncStatus, onLogout, isTimeTrack
         <div className="w-full lg:w-2/3 flex flex-col gap-4">
           <div className="flex gap-2 border-b border-slate-300 overflow-x-auto no-scrollbar">
             {[{ id: 'RECLAMO', label: 'RECLAMOS' }, { id: 'INSTALACION', label: 'INSTALACIONES' }, { id: 'DESCONEXION', label: 'DESCONEXIONES' }, { id: 'FINALIZADAS', label: 'FINALIZADAS' }].map(tab => {
-              const count = tab.id === 'FINALIZADAS' 
-                ? tasks.filter(t => t.estado === 'FINALIZADA').length 
+              const count = tab.id === 'FINALIZADAS'
+                ? tasks.filter(t => t.estado === 'FINALIZADA').length
                 : tasks.filter(t => t.tipo === tab.id && t.estado !== 'FINALIZADA').length;
               return (
                 <button key={tab.id} onClick={() => setFilterTipo(tab.id)} className={`px-4 py-3 font-bold text-sm uppercase tracking-wide whitespace-nowrap border-b-2 transition-colors flex items-center gap-2 ${filterTipo === tab.id ? 'border-indigo-600 text-indigo-700' : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'}`}>
@@ -795,7 +795,7 @@ function AdminDashboard({ tasks, onUpdateTask, syncStatus, onLogout, isTimeTrack
                 Mapa Global de Tareas
               </h2>
               <p className="text-sm text-slate-500 mt-1">
-                 Mostrando {pendingTasksForMap.length} puntos. Dibuja sobre el mapa para asignar tareas en lote.
+                Mostrando {pendingTasksForMap.length} puntos. Dibuja sobre el mapa para asignar tareas en lote.
               </p>
             </div>
             <div className="flex flex-wrap gap-4 text-xs font-semibold text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100 shadow-sm">
@@ -808,9 +808,9 @@ function AdminDashboard({ tasks, onUpdateTask, syncStatus, onLogout, isTimeTrack
           <div className="w-full h-[450px] sm:h-[600px] bg-slate-100 rounded-xl overflow-hidden shadow-inner border border-slate-300 relative z-0">
             <iframe title="Mapa General" srcDoc={generateMapHTML(pendingTasksForMap, sortOrder === 'geo', movilesList)} className="w-full h-full border-none"></iframe>
             {pendingTasksForMap.length === 0 && (
-               <div className="absolute inset-0 flex items-center justify-center bg-slate-100/80 backdrop-blur-sm z-10">
-                  <p className="text-slate-500 font-medium bg-white px-4 py-2 rounded-lg shadow-sm border border-slate-200">No hay tareas en este filtro para mostrar.</p>
-               </div>
+              <div className="absolute inset-0 flex items-center justify-center bg-slate-100/80 backdrop-blur-sm z-10">
+                <p className="text-slate-500 font-medium bg-white px-4 py-2 rounded-lg shadow-sm border border-slate-200">No hay tareas en este filtro para mostrar.</p>
+              </div>
             )}
           </div>
         </div>
@@ -827,7 +827,7 @@ function TecnicoDashboard({ tasks, onUpdateTask, onLogout, movilPasswords, movil
   const [selectedMovilAuth, setSelectedMovilAuth] = useState(null);
   const [movilPasswordInput, setMovilPasswordInput] = useState('');
   const [movilLoginError, setMovilLoginError] = useState(false);
-  
+
   // Estados para la navegación del técnico
   const [techView, setTechView] = useState('menu'); // 'menu', 'form', 'tareas', 'manuales'
   const [formVehiculo, setFormVehiculo] = useState(() => {
@@ -838,19 +838,19 @@ function TecnicoDashboard({ tasks, onUpdateTask, onLogout, movilPasswords, movil
   const [dropdownOpen, setDropdownOpen] = useState(null); // Nuevo estado para menús rápidos
 
   const tecnicosList = ['ACEVEDO', 'ALLENDE', 'ANTONELLO', 'ARROYO', 'DIAZ', 'NAKASONE', 'PARISI', 'PERALTA', 'POWELL', 'RODRIGUEZ', 'SMITH'];
-  
+
   // Estados de Tareas y PDF
-  const [taskToConfirm, setTaskToConfirm] = useState(null); 
-  const [resolucionTexto, setResolucionTexto] = useState(""); 
+  const [taskToConfirm, setTaskToConfirm] = useState(null);
+  const [resolucionTexto, setResolucionTexto] = useState("");
   const [quickSelectVal, setQuickSelectVal] = useState("");
-  const [expandedObs, setExpandedObs] = useState({}); 
-  const [expandedServicios, setExpandedServicios] = useState({}); 
-  const [expandedContacto, setExpandedContacto] = useState({}); 
+  const [expandedObs, setExpandedObs] = useState({});
+  const [expandedServicios, setExpandedServicios] = useState({});
+  const [expandedContacto, setExpandedContacto] = useState({});
   const [expandedAusente, setExpandedAusente] = useState({});
   const [expandedProblema, setExpandedProblema] = useState({});
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
-  const [sortOrder, setSortOrder] = useState('prioridad'); 
-  
+  const [sortOrder, setSortOrder] = useState('prioridad');
+
   // Estado para el modal final
   const [showKmFinalModal, setShowKmFinalModal] = useState(false);
   const [kmFinal, setKmFinal] = useState('');
@@ -860,7 +860,7 @@ function TecnicoDashboard({ tasks, onUpdateTask, onLogout, movilPasswords, movil
   const [macRetirado, setMacRetirado] = useState('');
   const [scanningField, setScanningField] = useState(null); // 'instalado' | 'retirado'
   const [compressingTaskId, setCompressingTaskId] = useState(null);
-  
+
   // Estado para zoom de texto
   const [textSizeMultiplier, setTextSizeMultiplier] = useState(1);
 
@@ -957,14 +957,14 @@ function TecnicoDashboard({ tasks, onUpdateTask, onLogout, movilPasswords, movil
       alert('Tu dispositivo actual no soporta enviar la foto automáticamente. Abriremos WhatsApp para que la adjuntes manualmente desde tu galería.');
       window.open(`https://wa.me/5493512224737?text=${encodeURIComponent(mensaje)}`, '_blank');
     }
-    
+
     event.target.value = '';
   };
 
   const misTareas = useMemo(() => {
     if (!miMovil) return [];
     let filtradas = tasks.filter(task => task.movil === miMovil && task.estado !== 'FINALIZADA');
-    
+
     filtradas.sort((a, b) => {
       if (sortOrder === 'geo') {
         const centerLat = -31.656228;
@@ -973,7 +973,7 @@ function TecnicoDashboard({ tasks, onUpdateTask, onLogout, movilPasswords, movil
         const distB = Math.pow((b.lat || 0) - centerLat, 2) + Math.pow((b.lng || 0) - centerLng, 2);
         return distA - distB;
       }
-      
+
       if (sortOrder === 'asc') {
         return new Date(a.fechaReclamo).getTime() - new Date(b.fechaReclamo).getTime();
       }
@@ -1009,23 +1009,23 @@ function TecnicoDashboard({ tasks, onUpdateTask, onLogout, movilPasswords, movil
       doc.setFontSize(22);
       doc.setTextColor(30, 41, 59);
       doc.text("Reporte de Turno", 14, 22);
-      
+
       doc.setFontSize(10);
       doc.setTextColor(100, 116, 139);
       doc.text(`Móvil Asignado: ${miMovil}`, 14, 32);
       doc.text(`Fecha: ${new Date().toLocaleDateString('es-AR')}`, 14, 37);
-      
+
       doc.setTextColor(79, 70, 229);
       doc.text(`Cuadrilla: ${formVehiculo.tecnico1} ${formVehiculo.tecnico2 && formVehiculo.tecnico2 !== 'NINGUNO' ? '& ' + formVehiculo.tecnico2 : ''}`, 14, 44);
       doc.text(`Km Inicial: ${formVehiculo.kmInicial}   |   Km Final: ${kmFinal}   |   Combustible: ${formVehiculo.combustible}`, 14, 49);
       doc.text(`Obs. Vehículo: ${formVehiculo.observaciones || 'Ninguna'}`, 14, 54);
-      
+
       doc.setTextColor(100, 116, 139);
       doc.text(`Total Completadas: ${completedTasks.length} Tareas`, 14, 61);
-      
+
       const tableColumn = ["N° Abonado", "Apellido y Nombre", "Direccion", "Resolucion"];
       const tableRows = completedTasks.map(t => [t.nroCliente, t.cliente, t.direccion, t.resolucionTecnico ? t.resolucionTecnico : 'Sin detalles']);
-      
+
       doc.autoTable({
         startY: 67,
         head: [tableColumn],
@@ -1035,9 +1035,9 @@ function TecnicoDashboard({ tasks, onUpdateTask, onLogout, movilPasswords, movil
         styles: { fontSize: 9, cellPadding: 4 },
         columnStyles: { 0: { cellWidth: 25 }, 1: { cellWidth: 40 }, 2: { cellWidth: 60 }, 3: { cellWidth: 'auto' } }
       });
-      
+
       doc.setFontSize(10);
-      doc.setTextColor(148, 163, 184); 
+      doc.setTextColor(148, 163, 184);
       doc.text(`Centro Operativo Alta Gracia - Generado por Sistema Gestor de Tareas`, 14, doc.internal.pageSize.height - 20);
       const fileName = `Reporte_${miMovil.replace(' ', '_')}_${new Date().toLocaleDateString('es-AR').replace(/\//g, '-')}.pdf`;
       doc.save(fileName);
@@ -1059,7 +1059,7 @@ function TecnicoDashboard({ tasks, onUpdateTask, onLogout, movilPasswords, movil
 
       setIsGeneratingPDF(false);
       setShowKmFinalModal(false);
-      
+
       setFormVehiculo({ tecnico1: '', tecnico2: '', kmInicial: '', combustible: 'Medio (1/2)', observaciones: '' });
       setIsFormCompleted(false);
       setKmFinal('');
@@ -1098,7 +1098,7 @@ function TecnicoDashboard({ tasks, onUpdateTask, onLogout, movilPasswords, movil
       <div className="min-h-screen bg-slate-100 flex flex-col items-center justify-center p-4 animate-in fade-in w-full max-w-md mx-auto relative">
         <div className="w-full bg-white p-8 rounded-3xl shadow-xl text-center border border-slate-100 relative">
           <button onClick={onLogout} className="absolute top-4 right-4 p-2 bg-slate-50 text-slate-400 hover:bg-red-50 hover:text-red-600 rounded-full transition-colors border border-transparent hover:border-red-100">
-            <X className="w-5 h-5"/>
+            <X className="w-5 h-5" />
           </button>
           <div className="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-6 mt-2 text-indigo-600">
             <Truck className="w-10 h-10" />
@@ -1117,8 +1117,8 @@ function TecnicoDashboard({ tasks, onUpdateTask, onLogout, movilPasswords, movil
         {selectedMovilAuth && (
           <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center p-4">
             <div className="bg-white rounded-3xl p-8 w-full max-w-sm shadow-2xl relative animate-in zoom-in-95">
-              <button onClick={() => {setSelectedMovilAuth(null); setMovilLoginError(false); setMovilPasswordInput('');}} className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 rounded-full transition-colors">
-                <X className="w-5 h-5"/>
+              <button onClick={() => { setSelectedMovilAuth(null); setMovilLoginError(false); setMovilPasswordInput(''); }} className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 rounded-full transition-colors">
+                <X className="w-5 h-5" />
               </button>
               <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4 text-emerald-600">
                 <KeyRound className="w-8 h-8" />
@@ -1127,8 +1127,8 @@ function TecnicoDashboard({ tasks, onUpdateTask, onLogout, movilPasswords, movil
               <p className="text-center text-slate-500 text-sm mb-6">Ingresa tu clave asignada para iniciar el turno.</p>
               <form onSubmit={(e) => {
                 e.preventDefault();
-                const validPassword = movilPasswords[selectedMovilAuth] || '1234'; 
-                if (movilPasswordInput === validPassword) { 
+                const validPassword = movilPasswords[selectedMovilAuth] || '1234';
+                if (movilPasswordInput === validPassword) {
                   setMiMovil(selectedMovilAuth);
                   localStorage.setItem('miMovil', selectedMovilAuth);
                   setSelectedMovilAuth(null);
@@ -1140,7 +1140,7 @@ function TecnicoDashboard({ tasks, onUpdateTask, onLogout, movilPasswords, movil
                 }
               }}>
                 <div className="mb-4">
-                  <input type="password" placeholder="Contraseña del móvil" value={movilPasswordInput} onChange={(e) => {setMovilPasswordInput(e.target.value); setMovilLoginError(false);}} className={`w-full p-4 border rounded-2xl outline-none focus:ring-2 transition-all text-center tracking-widest ${movilLoginError ? 'border-red-400 focus:ring-red-200 bg-red-50' : 'border-slate-300 focus:ring-emerald-200 focus:border-emerald-500'}`} autoFocus />
+                  <input type="password" placeholder="Contraseña del móvil" value={movilPasswordInput} onChange={(e) => { setMovilPasswordInput(e.target.value); setMovilLoginError(false); }} className={`w-full p-4 border rounded-2xl outline-none focus:ring-2 transition-all text-center tracking-widest ${movilLoginError ? 'border-red-400 focus:ring-red-200 bg-red-50' : 'border-slate-300 focus:ring-emerald-200 focus:border-emerald-500'}`} autoFocus />
                   {movilLoginError && <p className="text-red-500 text-xs font-bold mt-2 ml-1 text-center animate-pulse">Clave incorrecta.</p>}
                 </div>
                 <button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 rounded-2xl transition-colors shadow-md">Ingresar</button>
@@ -1170,10 +1170,10 @@ function TecnicoDashboard({ tasks, onUpdateTask, onLogout, movilPasswords, movil
         </header>
 
         <h2 className="text-xl font-bold text-slate-800 mb-4 px-2">Menú Principal</h2>
-        
+
         <div className="flex flex-col gap-4">
-          <button 
-            onClick={() => setTechView('form')} 
+          <button
+            onClick={() => setTechView('form')}
             className="p-6 bg-white rounded-3xl shadow-sm border border-slate-200 flex items-center gap-4 hover:border-indigo-400 transition-colors relative overflow-hidden"
           >
             <div className="w-14 h-14 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center shrink-0"><ClipboardCheck className="w-7 h-7" /></div>
@@ -1184,11 +1184,11 @@ function TecnicoDashboard({ tasks, onUpdateTask, onLogout, movilPasswords, movil
             {isFormCompleted ? <CheckCircle className="w-6 h-6 text-emerald-500 absolute right-6 top-1/2 -translate-y-1/2" /> : <ChevronRight className="w-6 h-6 text-slate-300 absolute right-6 top-1/2 -translate-y-1/2" />}
           </button>
 
-          <button 
+          <button
             onClick={() => {
               if (!isFormCompleted) alert('Por favor, completa el Formulario Móvil antes de acceder a tus tareas.');
               else setTechView('tareas');
-            }} 
+            }}
             className={`p-6 rounded-3xl shadow-sm border flex items-center gap-4 transition-colors relative ${isFormCompleted ? 'bg-white border-slate-200 hover:border-emerald-400 cursor-pointer' : 'bg-slate-50 border-slate-200 opacity-70 cursor-not-allowed'}`}
           >
             <div className={`w-14 h-14 rounded-full flex items-center justify-center shrink-0 ${isFormCompleted ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-200 text-slate-400'}`}>
@@ -1202,8 +1202,8 @@ function TecnicoDashboard({ tasks, onUpdateTask, onLogout, movilPasswords, movil
           </button>
 
           {/* Nueva Opción de Accesos Router */}
-          <button 
-            onClick={() => setTechView('manuales')} 
+          <button
+            onClick={() => setTechView('manuales')}
             className="p-6 bg-white rounded-3xl shadow-sm border border-slate-200 flex items-center gap-4 hover:border-blue-400 transition-colors relative overflow-hidden"
           >
             <div className="w-14 h-14 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center shrink-0"><Wifi className="w-7 h-7" /></div>
@@ -1223,7 +1223,7 @@ function TecnicoDashboard({ tasks, onUpdateTask, onLogout, movilPasswords, movil
     return (
       <div className="min-h-screen bg-slate-100 flex flex-col p-4 w-full max-w-md mx-auto animate-in slide-in-from-right">
         <header className="flex items-center gap-4 bg-white p-4 rounded-3xl shadow-sm border border-slate-200 mb-6">
-          <button onClick={() => setTechView('menu')} className="p-2 bg-slate-100 text-slate-600 rounded-full hover:bg-slate-200 transition-colors"><ArrowLeft className="w-5 h-5"/></button>
+          <button onClick={() => setTechView('menu')} className="p-2 bg-slate-100 text-slate-600 rounded-full hover:bg-slate-200 transition-colors"><ArrowLeft className="w-5 h-5" /></button>
           <div>
             <h2 className="text-lg font-bold text-slate-800 leading-none">Check-in Vehículo</h2>
             <p className="text-xs text-slate-500 mt-1">{miMovil}</p>
@@ -1234,8 +1234,8 @@ function TecnicoDashboard({ tasks, onUpdateTask, onLogout, movilPasswords, movil
           {dropdownOpen && <div className="fixed inset-0 z-30" onClick={() => setDropdownOpen(null)}></div>}
 
           <div className="relative z-50">
-            <label className="text-sm font-bold text-slate-700 mb-2 flex items-center gap-2"><User className="w-4 h-4 text-indigo-500"/> Cuadrilla - Técnico 1</label>
-            <div 
+            <label className="text-sm font-bold text-slate-700 mb-2 flex items-center gap-2"><User className="w-4 h-4 text-indigo-500" /> Cuadrilla - Técnico 1</label>
+            <div
               onClick={() => setDropdownOpen(dropdownOpen === 'tecnico1' ? null : 'tecnico1')}
               className="w-full p-3 border border-slate-300 rounded-xl bg-white flex justify-between items-center cursor-pointer shadow-sm"
             >
@@ -1247,8 +1247,8 @@ function TecnicoDashboard({ tasks, onUpdateTask, onLogout, movilPasswords, movil
             {dropdownOpen === 'tecnico1' && (
               <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-2xl z-50 max-h-56 overflow-y-auto animate-in fade-in zoom-in-95">
                 {tecnicosList.map(t => (
-                  <div 
-                    key={t} 
+                  <div
+                    key={t}
                     onClick={() => { setFormVehiculo({ ...formVehiculo, tecnico1: t }); setDropdownOpen(null); }}
                     className="p-3.5 border-b border-slate-100 last:border-0 font-bold text-slate-700 hover:bg-indigo-50 active:bg-indigo-100 cursor-pointer"
                   >
@@ -1260,8 +1260,8 @@ function TecnicoDashboard({ tasks, onUpdateTask, onLogout, movilPasswords, movil
           </div>
 
           <div className="relative z-40">
-            <label className="text-sm font-bold text-slate-700 mb-2 flex items-center gap-2"><User className="w-4 h-4 text-indigo-500"/> Cuadrilla - Técnico 2</label>
-            <div 
+            <label className="text-sm font-bold text-slate-700 mb-2 flex items-center gap-2"><User className="w-4 h-4 text-indigo-500" /> Cuadrilla - Técnico 2</label>
+            <div
               onClick={() => setDropdownOpen(dropdownOpen === 'tecnico2' ? null : 'tecnico2')}
               className="w-full p-3 border border-slate-300 rounded-xl bg-white flex justify-between items-center cursor-pointer shadow-sm"
             >
@@ -1272,15 +1272,15 @@ function TecnicoDashboard({ tasks, onUpdateTask, onLogout, movilPasswords, movil
             </div>
             {dropdownOpen === 'tecnico2' && (
               <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-2xl z-50 max-h-56 overflow-y-auto animate-in fade-in zoom-in-95">
-                <div 
+                <div
                   onClick={() => { setFormVehiculo({ ...formVehiculo, tecnico2: 'NINGUNO' }); setDropdownOpen(null); }}
                   className="p-3.5 border-b border-slate-100 font-bold text-slate-700 hover:bg-indigo-50 active:bg-indigo-100 cursor-pointer"
                 >
                   NINGUNO (TRABAJO SOLO)
                 </div>
                 {tecnicosList.map(t => (
-                  <div 
-                    key={t} 
+                  <div
+                    key={t}
                     onClick={() => { setFormVehiculo({ ...formVehiculo, tecnico2: t }); setDropdownOpen(null); }}
                     className="p-3.5 border-b border-slate-100 last:border-0 font-bold text-slate-700 hover:bg-indigo-50 active:bg-indigo-100 cursor-pointer"
                   >
@@ -1292,19 +1292,19 @@ function TecnicoDashboard({ tasks, onUpdateTask, onLogout, movilPasswords, movil
           </div>
 
           <div>
-            <label className="text-sm font-bold text-slate-700 mb-2 flex items-center gap-2"><Gauge className="w-4 h-4 text-indigo-500"/> Kilometraje Inicial</label>
-            <input 
-              type="number" 
-              value={formVehiculo.kmInicial} 
-              onChange={(e) => setFormVehiculo({ ...formVehiculo, kmInicial: e.target.value })} 
-              className="w-full p-3 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm" 
-              placeholder="Ej. 125000" 
+            <label className="text-sm font-bold text-slate-700 mb-2 flex items-center gap-2"><Gauge className="w-4 h-4 text-indigo-500" /> Kilometraje Inicial</label>
+            <input
+              type="number"
+              value={formVehiculo.kmInicial}
+              onChange={(e) => setFormVehiculo({ ...formVehiculo, kmInicial: e.target.value })}
+              className="w-full p-3 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+              placeholder="Ej. 125000"
             />
           </div>
 
           <div className="relative z-30">
-            <label className="text-sm font-bold text-slate-700 mb-2 flex items-center gap-2"><Fuel className="w-4 h-4 text-orange-500"/> Nivel de Combustible</label>
-            <div 
+            <label className="text-sm font-bold text-slate-700 mb-2 flex items-center gap-2"><Fuel className="w-4 h-4 text-orange-500" /> Nivel de Combustible</label>
+            <div
               onClick={() => setDropdownOpen(dropdownOpen === 'combustible' ? null : 'combustible')}
               className="w-full p-3 border border-slate-300 rounded-xl bg-white flex justify-between items-center cursor-pointer shadow-sm"
             >
@@ -1316,8 +1316,8 @@ function TecnicoDashboard({ tasks, onUpdateTask, onLogout, movilPasswords, movil
             {dropdownOpen === 'combustible' && (
               <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-2xl z-50 max-h-56 overflow-y-auto animate-in fade-in zoom-in-95">
                 {['Reserva', '1/4 Tanque', 'Medio (1/2)', '3/4 Tanque', 'Lleno'].map(c => (
-                  <div 
-                    key={c} 
+                  <div
+                    key={c}
                     onClick={() => { setFormVehiculo({ ...formVehiculo, combustible: c }); setDropdownOpen(null); }}
                     className="p-3.5 border-b border-slate-100 last:border-0 font-bold text-slate-700 hover:bg-indigo-50 active:bg-indigo-100 cursor-pointer"
                   >
@@ -1329,30 +1329,30 @@ function TecnicoDashboard({ tasks, onUpdateTask, onLogout, movilPasswords, movil
           </div>
 
           <div>
-            <label className="text-sm font-bold text-slate-700 mb-2 flex items-center gap-2"><AlertCircle className="w-4 h-4 text-red-500"/> Observaciones del Vehículo</label>
-            <textarea 
-              value={formVehiculo.observaciones} 
-              onChange={(e) => setFormVehiculo({ ...formVehiculo, observaciones: e.target.value })} 
-              className="w-full p-3 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 resize-none shadow-sm" 
-              rows="3" 
+            <label className="text-sm font-bold text-slate-700 mb-2 flex items-center gap-2"><AlertCircle className="w-4 h-4 text-red-500" /> Observaciones del Vehículo</label>
+            <textarea
+              value={formVehiculo.observaciones}
+              onChange={(e) => setFormVehiculo({ ...formVehiculo, observaciones: e.target.value })}
+              className="w-full p-3 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 resize-none shadow-sm"
+              rows="3"
               placeholder="Ej. óptica derecha rota, falta rueda de auxilio..."
             ></textarea>
           </div>
-          <button 
+          <button
             onClick={() => {
               if (!formVehiculo.tecnico1) alert("Por favor selecciona al Técnico 1 de la cuadrilla.");
               else if (!formVehiculo.tecnico2) alert("Por favor selecciona al Técnico 2 de la cuadrilla (o 'Ninguno').");
               else if (!formVehiculo.kmInicial) alert("Por favor ingresa el kilometraje inicial.");
-              else { 
-                setIsFormCompleted(true); 
+              else {
+                setIsFormCompleted(true);
                 localStorage.setItem('isFormCompleted', 'true');
                 localStorage.setItem('formVehiculo', JSON.stringify(formVehiculo));
-                setTechView('menu'); 
+                setTechView('menu');
 
                 // Guardar formulario en Firebase
                 onSaveForm('CHECK-IN VEHÍCULO', miMovil, formVehiculo);
               }
-            }} 
+            }}
             className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl shadow-md transition-colors mt-2"
           >
             Guardar Formulario
@@ -1376,7 +1376,7 @@ function TecnicoDashboard({ tasks, onUpdateTask, onLogout, movilPasswords, movil
     return (
       <div className="min-h-screen bg-slate-900 flex flex-col p-4 w-full max-w-md mx-auto animate-in slide-in-from-right">
         <header className="flex items-center gap-4 bg-slate-800 p-4 rounded-3xl shadow-sm border border-slate-700 mb-6">
-          <button onClick={() => setTechView('menu')} className="p-2 bg-slate-700 text-slate-300 rounded-full hover:bg-slate-600 transition-colors"><ArrowLeft className="w-5 h-5"/></button>
+          <button onClick={() => setTechView('menu')} className="p-2 bg-slate-700 text-slate-300 rounded-full hover:bg-slate-600 transition-colors"><ArrowLeft className="w-5 h-5" /></button>
           <div>
             <h2 className="text-lg font-bold text-white leading-none">Accesos Módem/Router</h2>
             <p className="text-xs text-slate-400 mt-1">Credenciales por defecto</p>
@@ -1417,7 +1417,7 @@ function TecnicoDashboard({ tasks, onUpdateTask, onLogout, movilPasswords, movil
   // --- VISTA: TAREAS ASIGNADAS (El panel original de mapas y trabajos) ---
   return (
     <div className="min-h-screen bg-slate-100 font-sans pb-32 w-full max-w-md mx-auto shadow-2xl relative animate-in slide-in-from-right print:hidden">
-      
+
       {/* Modal Lector QR / Barcode */}
       {scanningField && (
         <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-sm z-50 flex flex-col items-center justify-center p-4">
@@ -1427,7 +1427,7 @@ function TecnicoDashboard({ tasks, onUpdateTask, onLogout, movilPasswords, movil
                 <QrCode className="w-6 h-6" />
                 <h3 className="text-lg font-bold text-slate-800">Escanear Equipo</h3>
               </div>
-              <button onClick={() => setScanningField(null)} className="p-2 text-slate-400 hover:text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-full transition-colors"><X className="w-5 h-5"/></button>
+              <button onClick={() => setScanningField(null)} className="p-2 text-slate-400 hover:text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-full transition-colors"><X className="w-5 h-5" /></button>
             </div>
             <div id="qr-reader" className="w-full rounded-xl overflow-hidden border-2 border-slate-200 mb-2"></div>
             <p className="text-sm text-center text-slate-500 font-medium">Apunta la cámara al código de barras o QR del equipo {scanningField === 'instalado' ? 'nuevo a instalar' : 'que estás retirando'}.</p>
@@ -1442,12 +1442,12 @@ function TecnicoDashboard({ tasks, onUpdateTask, onLogout, movilPasswords, movil
             <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-600"><Gauge className="w-8 h-8" /></div>
             <h3 className="text-xl font-bold text-slate-800 mb-2">Cierre de Turno</h3>
             <p className="text-sm text-slate-500 mb-6">Ingresa el kilometraje final para generar el reporte.</p>
-            <input 
-              type="number" 
-              value={kmFinal} 
-              onChange={(e) => setKmFinal(e.target.value)} 
-              className="w-full p-4 border border-slate-300 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 mb-4 text-center text-lg font-bold" 
-              placeholder="Km Final" 
+            <input
+              type="number"
+              value={kmFinal}
+              onChange={(e) => setKmFinal(e.target.value)}
+              className="w-full p-4 border border-slate-300 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 mb-4 text-center text-lg font-bold"
+              placeholder="Km Final"
             />
             <div className="flex gap-3">
               <button onClick={() => setShowKmFinalModal(false)} className="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 py-3 rounded-xl font-bold transition-colors">Cancelar</button>
@@ -1461,7 +1461,7 @@ function TecnicoDashboard({ tasks, onUpdateTask, onLogout, movilPasswords, movil
 
       <header className="bg-white/90 backdrop-blur-md border-b border-slate-200 shadow-sm sticky top-0 z-20 px-4 py-3 flex justify-between items-center">
         <div className="flex items-center gap-3">
-          <button onClick={() => setTechView('menu')} className="p-2 bg-slate-100 text-slate-600 rounded-full hover:bg-slate-200 transition-colors mr-1"><ArrowLeft className="w-4 h-4"/></button>
+          <button onClick={() => setTechView('menu')} className="p-2 bg-slate-100 text-slate-600 rounded-full hover:bg-slate-200 transition-colors mr-1"><ArrowLeft className="w-4 h-4" /></button>
           <div className="bg-indigo-100 p-2 rounded-xl text-indigo-600"><Truck className="w-5 h-5" /></div>
           <div>
             <h1 className="text-lg font-bold text-slate-800 leading-none">{miMovil}</h1>
@@ -1480,12 +1480,12 @@ function TecnicoDashboard({ tasks, onUpdateTask, onLogout, movilPasswords, movil
               <div className="flex flex-wrap items-center gap-2">
                 <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1 shadow-sm">
                   <Type className="w-4 h-4 text-slate-400" />
-                  <input 
-                    type="range" 
-                    min="1" 
-                    max="1.8" 
-                    step="0.1" 
-                    value={textSizeMultiplier} 
+                  <input
+                    type="range"
+                    min="1"
+                    max="1.8"
+                    step="0.1"
+                    value={textSizeMultiplier}
                     onChange={(e) => setTextSizeMultiplier(parseFloat(e.target.value))}
                     className="w-20 sm:w-24 accent-indigo-600"
                     title="Aumentar tamaño de texto"
@@ -1493,8 +1493,8 @@ function TecnicoDashboard({ tasks, onUpdateTask, onLogout, movilPasswords, movil
                 </div>
                 <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-2 py-1 shadow-sm w-fit">
                   <Filter className="w-3.5 h-3.5 text-slate-400" />
-                  <select 
-                    value={sortOrder} 
+                  <select
+                    value={sortOrder}
                     onChange={(e) => setSortOrder(e.target.value)}
                     className="bg-transparent border-0 text-xs font-semibold text-slate-600 focus:ring-0 outline-none cursor-pointer py-1 pr-6"
                   >
@@ -1578,20 +1578,20 @@ function TecnicoDashboard({ tasks, onUpdateTask, onLogout, movilPasswords, movil
                     <div className="p-4 mt-2 bg-orange-50/50 border border-orange-100 rounded-xl shadow-inner animate-in slide-in-from-top-2">
                       <p className="text-sm text-center text-slate-700 font-medium mb-3">Si no encuentras al cliente, repórtalo aquí:</p>
                       <div className="flex gap-2">
-                        <a 
-                          href={`https://wa.me/5493512224737?text=${encodeURIComponent(`*AUSENTE*\nCliente: ${task.cliente}\nNro Abonado: ${task.nroCliente}\nDirección: ${task.direccion}`)}`} 
-                          target="_blank" 
-                          rel="noopener noreferrer" 
+                        <a
+                          href={`https://wa.me/5493512224737?text=${encodeURIComponent(`*AUSENTE*\nCliente: ${task.cliente}\nNro Abonado: ${task.nroCliente}\nDirección: ${task.direccion}`)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
                           className="flex-1 bg-green-500 text-white py-2.5 rounded-xl flex items-center justify-center gap-2 font-bold transition-colors text-sm shadow-sm"
                         >
                           <MessageCircle className="w-4 h-4" /> WhatsApp
                         </a>
-                        
-                        <label 
+
+                        <label
                           htmlFor={`camera-${task.id}`}
                           className={`flex-1 ${compressingTaskId === task.id ? 'bg-slate-600 cursor-wait' : 'bg-slate-800 cursor-pointer'} text-white py-2.5 rounded-xl flex items-center justify-center gap-2 font-bold transition-colors text-sm shadow-sm`}
                         >
-                          {compressingTaskId === task.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />} 
+                          {compressingTaskId === task.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
                           {compressingTaskId === task.id ? 'Comprimiendo...' : 'Cámara'}
                           <input type="file" accept="image/*" capture="environment" id={`camera-${task.id}`} className="hidden" disabled={compressingTaskId === task.id} onChange={(e) => handleCameraCapture(e, task)} />
                         </label>
@@ -1610,18 +1610,18 @@ function TecnicoDashboard({ tasks, onUpdateTask, onLogout, movilPasswords, movil
                       <div className="p-4 mt-2 bg-red-50/50 border border-red-100 rounded-xl shadow-inner animate-in slide-in-from-top-2">
                         <p className="text-sm text-center text-slate-700 font-medium mb-3">Selecciona el problema para informar por WhatsApp:</p>
                         <div className="flex flex-col gap-2">
-                          <a 
-                            href={`https://wa.me/5493512224737?text=${encodeURIComponent(`*PROBLEMA: NO SE ENCONTRÓ DIRECCIÓN*\nCliente: ${task.cliente}\nNro Abonado: ${task.nroCliente}\nDirección: ${task.direccion}`)}`} 
-                            target="_blank" 
-                            rel="noopener noreferrer" 
+                          <a
+                            href={`https://wa.me/5493512224737?text=${encodeURIComponent(`*PROBLEMA: NO SE ENCONTRÓ DIRECCIÓN*\nCliente: ${task.cliente}\nNro Abonado: ${task.nroCliente}\nDirección: ${task.direccion}`)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
                             className="w-full bg-red-500 hover:bg-red-600 text-white py-2.5 rounded-xl flex items-center justify-center gap-2 font-bold transition-colors text-sm shadow-sm"
                           >
                             <MapPin className="w-4 h-4" /> No se encontró dirección
                           </a>
-                          <a 
-                            href={`https://wa.me/5493512224737?text=${encodeURIComponent(`*PROBLEMA: PROMESA DE PAGO*\nCliente: ${task.cliente}\nNro Abonado: ${task.nroCliente}\nDirección: ${task.direccion}`)}`} 
-                            target="_blank" 
-                            rel="noopener noreferrer" 
+                          <a
+                            href={`https://wa.me/5493512224737?text=${encodeURIComponent(`*PROBLEMA: PROMESA DE PAGO*\nCliente: ${task.cliente}\nNro Abonado: ${task.nroCliente}\nDirección: ${task.direccion}`)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
                             className="w-full bg-yellow-500 hover:bg-yellow-600 text-white py-2.5 rounded-xl flex items-center justify-center gap-2 font-bold transition-colors text-sm shadow-sm"
                           >
                             <Clock className="w-4 h-4" /> Promesa de pago
@@ -1634,62 +1634,62 @@ function TecnicoDashboard({ tasks, onUpdateTask, onLogout, movilPasswords, movil
 
                 <div className={`grid gap-3 mt-4 border-t border-slate-100 pt-4 ${taskToConfirm === task.id ? 'grid-cols-1' : (task.estado === 'EN CURSO' ? 'grid-cols-3' : 'grid-cols-2')}`}>
                   {taskToConfirm === task.id ? (
-                     <div className="col-span-full flex flex-col gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-200 animate-in fade-in shadow-inner">
-                        <div>
-                          <label className="text-sm font-semibold text-slate-700 mb-1 block">Resolución de Tarea:</label>
-                          <select 
-                            value={quickSelectVal}
-                            className="w-full p-3 mb-2 rounded-xl border border-slate-300 text-sm outline-none bg-white text-slate-600 focus:ring-2 focus:ring-indigo-500 shadow-sm"
-                            onChange={(e) => {
-                              const selectedText = e.target.value; 
-                              setQuickSelectVal(selectedText);
-                              if (selectedText) {
-                                setResolucionTexto(prev => prev ? prev + (prev.endsWith(' ') ? '' : ' ') + selectedText : selectedText);
-                                // Un pequeño retraso permite que el celular muestre el "check" nativo antes de resetear
-                                setTimeout(() => setQuickSelectVal(""), 400); 
-                              }
-                            }}
-                          >
-                            <option value="">+ Agregar texto rápido...</option>
-                            {resolucionOpciones.map(opcion => (
-                              <option key={opcion} value={opcion}>{opcion}</option>
-                            ))}
-                          </select>
-                          <textarea className="w-full p-3 rounded-xl border border-slate-300 text-sm outline-none resize-none focus:ring-2 focus:ring-indigo-500 shadow-sm" rows="3" placeholder="Detalle del trabajo..." value={resolucionTexto} onChange={(e) => setResolucionTexto(e.target.value)}></textarea>
-                        </div>
+                    <div className="col-span-full flex flex-col gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-200 animate-in fade-in shadow-inner">
+                      <div>
+                        <label className="text-sm font-semibold text-slate-700 mb-1 block">Resolución de Tarea:</label>
+                        <select
+                          value={quickSelectVal}
+                          className="w-full p-3 mb-2 rounded-xl border border-slate-300 text-sm outline-none bg-white text-slate-600 focus:ring-2 focus:ring-indigo-500 shadow-sm"
+                          onChange={(e) => {
+                            const selectedText = e.target.value;
+                            setQuickSelectVal(selectedText);
+                            if (selectedText) {
+                              setResolucionTexto(prev => prev ? prev + (prev.endsWith(' ') ? '' : ' ') + selectedText : selectedText);
+                              // Un pequeño retraso permite que el celular muestre el "check" nativo antes de resetear
+                              setTimeout(() => setQuickSelectVal(""), 400);
+                            }
+                          }}
+                        >
+                          <option value="">+ Agregar texto rápido...</option>
+                          {resolucionOpciones.map(opcion => (
+                            <option key={opcion} value={opcion}>{opcion}</option>
+                          ))}
+                        </select>
+                        <textarea className="w-full p-3 rounded-xl border border-slate-300 text-sm outline-none resize-none focus:ring-2 focus:ring-indigo-500 shadow-sm" rows="3" placeholder="Detalle del trabajo..." value={resolucionTexto} onChange={(e) => setResolucionTexto(e.target.value)}></textarea>
+                      </div>
 
-                        <div className="flex gap-3">
-                          <div className="flex-1">
-                            <label className="text-[10px] uppercase font-bold text-slate-500 mb-1 block">MAC/Serie Instalado</label>
-                            <div className="flex bg-white border border-slate-300 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-indigo-500 shadow-sm">
-                              <input type="text" value={macInstalado} onChange={e=>setMacInstalado(e.target.value)} className="w-full p-2.5 text-xs outline-none font-mono" placeholder="Ingresar..." />
-                              <button onClick={() => setScanningField('instalado')} className="p-2.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors border-l border-slate-200"><QrCode className="w-4 h-4"/></button>
-                            </div>
-                          </div>
-                          <div className="flex-1">
-                            <label className="text-[10px] uppercase font-bold text-slate-500 mb-1 block">MAC/Serie Retirado</label>
-                            <div className="flex bg-white border border-slate-300 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-indigo-500 shadow-sm">
-                              <input type="text" value={macRetirado} onChange={e=>setMacRetirado(e.target.value)} className="w-full p-2.5 text-xs outline-none font-mono" placeholder="Ingresar..." />
-                              <button onClick={() => setScanningField('retirado')} className="p-2.5 bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors border-l border-slate-200"><QrCode className="w-4 h-4"/></button>
-                            </div>
+                      <div className="flex gap-3">
+                        <div className="flex-1">
+                          <label className="text-[10px] uppercase font-bold text-slate-500 mb-1 block">MAC/Serie Instalado</label>
+                          <div className="flex bg-white border border-slate-300 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-indigo-500 shadow-sm">
+                            <input type="text" value={macInstalado} onChange={e => setMacInstalado(e.target.value)} className="w-full p-2.5 text-xs outline-none font-mono" placeholder="Ingresar..." />
+                            <button onClick={() => setScanningField('instalado')} className="p-2.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors border-l border-slate-200"><QrCode className="w-4 h-4" /></button>
                           </div>
                         </div>
-
-                        <div className="flex gap-2 mt-3 pt-3 border-t border-slate-200">
-                          <button onClick={() => { setTaskToConfirm(null); setResolucionTexto(''); setMacInstalado(''); setMacRetirado(''); setQuickSelectVal(''); }} className="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl py-3 font-bold text-sm transition-colors">Cancelar</button>
-                          <button onClick={() => { 
-                            let finalRes = resolucionTexto;
-                            if (macInstalado) finalRes += `\n[Instalado: ${macInstalado}]`;
-                            if (macRetirado) finalRes += `\n[Retirado: ${macRetirado}]`;
-                            onUpdateTask(task.id, { estado: 'FINALIZADA', resolucionTecnico: finalRes.trim(), horaFin: Date.now() }); 
-                            setTaskToConfirm(null); 
-                            setResolucionTexto(''); 
-                            setMacInstalado('');
-                            setMacRetirado('');
-                            setQuickSelectVal('');
-                          }} className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl py-3 font-bold text-sm shadow-md transition-colors">Confirmar</button>
+                        <div className="flex-1">
+                          <label className="text-[10px] uppercase font-bold text-slate-500 mb-1 block">MAC/Serie Retirado</label>
+                          <div className="flex bg-white border border-slate-300 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-indigo-500 shadow-sm">
+                            <input type="text" value={macRetirado} onChange={e => setMacRetirado(e.target.value)} className="w-full p-2.5 text-xs outline-none font-mono" placeholder="Ingresar..." />
+                            <button onClick={() => setScanningField('retirado')} className="p-2.5 bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors border-l border-slate-200"><QrCode className="w-4 h-4" /></button>
+                          </div>
                         </div>
-                     </div>
+                      </div>
+
+                      <div className="flex gap-2 mt-3 pt-3 border-t border-slate-200">
+                        <button onClick={() => { setTaskToConfirm(null); setResolucionTexto(''); setMacInstalado(''); setMacRetirado(''); setQuickSelectVal(''); }} className="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl py-3 font-bold text-sm transition-colors">Cancelar</button>
+                        <button onClick={() => {
+                          let finalRes = resolucionTexto;
+                          if (macInstalado) finalRes += `\n[Instalado: ${macInstalado}]`;
+                          if (macRetirado) finalRes += `\n[Retirado: ${macRetirado}]`;
+                          onUpdateTask(task.id, { estado: 'FINALIZADA', resolucionTecnico: finalRes.trim(), horaFin: Date.now() });
+                          setTaskToConfirm(null);
+                          setResolucionTexto('');
+                          setMacInstalado('');
+                          setMacRetirado('');
+                          setQuickSelectVal('');
+                        }} className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl py-3 font-bold text-sm shadow-md transition-colors">Confirmar</button>
+                      </div>
+                    </div>
                   ) : (
                     <React.Fragment>
                       <a href={`https://www.google.com/maps/dir/?api=1&destination=${task.lat},${task.lng}`} target="_blank" rel="noopener noreferrer" className={`flex flex-col items-center justify-center gap-1.5 bg-slate-50 text-slate-700 font-semibold py-3.5 rounded-2xl border border-slate-200 ${task.estado === 'EN CURSO' ? 'text-xs' : 'text-sm'}`}><Navigation className="w-5 h-5" /> <span>Navegar</span></a>
@@ -1714,8 +1714,8 @@ function TecnicoDashboard({ tasks, onUpdateTask, onLogout, movilPasswords, movil
             <h3 className="text-white font-bold text-lg mb-1 relative z-10">Cierre de Turno</h3>
             <p className="text-slate-300 text-sm mb-5 relative z-10">Reporte con {completedTasks.length} tareas.</p>
             <button onClick={() => {
-                if (completedTasks.length === 0) alert("Aún no tienes tareas finalizadas para generar reporte.");
-                else setShowKmFinalModal(true);
+              if (completedTasks.length === 0) alert("Aún no tienes tareas finalizadas para generar reporte.");
+              else setShowKmFinalModal(true);
             }} className="w-full font-bold py-4 rounded-2xl flex items-center justify-center gap-2 transition-colors shadow-md relative z-10 bg-indigo-500 hover:bg-indigo-600 text-white">
               <FileText className="w-5 h-5" /> Cerrar y Reportar PDF
             </button>
@@ -1759,13 +1759,13 @@ export default function App() {
   const [selectedFormDetail, setSelectedFormDetail] = useState(null);
 
   // Estados de Configuración
-  const [validAdminPassword, setValidAdminPassword] = useState('admin123'); 
+  const [validAdminPassword, setValidAdminPassword] = useState('admin123');
   const [validSettingsPassword, setValidSettingsPassword] = useState('config123');
   const [isTimeTrackingEnabled, setIsTimeTrackingEnabled] = useState(true); // Interruptor de Medición
   const [newAdminPwd, setNewAdminPwd] = useState('');
   const [confirmAdminPwd, setConfirmAdminPwd] = useState('');
   const [pwdUpdateMsg, setPwdUpdateMsg] = useState({ text: '', type: '' });
-  
+
   const [newSettingsPwd, setNewSettingsPwd] = useState('');
   const [confirmSettingsPwd, setConfirmSettingsPwd] = useState('');
   const [settingsPwdUpdateMsg, setSettingsPwdUpdateMsg] = useState({ text: '', type: '' });
@@ -1781,7 +1781,7 @@ export default function App() {
   const [movilPasswords, setMovilPasswords] = useState({
     'MÓVIL 1': 'movil1', 'MÓVIL 2': 'movil2', 'MÓVIL 3': 'movil3', 'MÓVIL 4': 'movil4'
   });
-  
+
   const [selectedMovilEdit, setSelectedMovilEdit] = useState('');
   const [newMovilPwd, setNewMovilPwd] = useState('');
   const [confirmMovilPwd, setConfirmMovilPwd] = useState('');
@@ -1795,8 +1795,8 @@ export default function App() {
 
   // Estados para Opciones de Resolución Rápidas
   const defaultResoluciones = [
-    'Reparacion de cable interno', 'Reparacion de cable de bordeo', 'Se programo tv', 
-    'Se configuro modem o deco', 'Corte de energia', 'Se calibro linea', 
+    'Reparacion de cable interno', 'Reparacion de cable de bordeo', 'Se programo tv',
+    'Se configuro modem o deco', 'Corte de energia', 'Se calibro linea',
     'Se reparo fuente', 'Se mejoro db', 'Se chequeo servicio', 'Se reparo linea'
   ];
   const [resolucionOpciones, setResolucionOpciones] = useState(defaultResoluciones);
@@ -1823,7 +1823,7 @@ export default function App() {
 
   useEffect(() => {
     if (!user) return;
-    
+
     // Cargar configuración de móviles desde Firebase - RUTA CORREGIDA (6 segmentos)
     const configDoc = doc(db, 'artifacts', appId, 'public', 'data', 'config', 'settings');
     const unsubConfig = onSnapshot(configDoc, (docSnap) => {
@@ -1841,7 +1841,7 @@ export default function App() {
 
     setSyncStatus('Sincronizando...');
     const tasksCollection = collection(db, 'artifacts', appId, 'public', 'data', 'tareas');
-    const unsubscribe = onSnapshot(tasksCollection, 
+    const unsubscribe = onSnapshot(tasksCollection,
       (snapshot) => {
         if (snapshot.empty) setTasks([]);
         else setTasks(snapshot.docs.map(doc => doc.data()));
@@ -1871,7 +1871,7 @@ export default function App() {
   const handleSaveFormulario = async (tipo, autor, datos) => {
     if (!user) return;
     const newForm = {
-      id: `form_${Date.now()}_${Math.random().toString(36).substr(2,5)}`,
+      id: `form_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
       tipo,
       autor,
       datos,
@@ -1881,7 +1881,7 @@ export default function App() {
     try {
       await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'formularios', newForm.id), newForm);
     } catch (e) {
-       console.error("Error guardando form:", e);
+      console.error("Error guardando form:", e);
     }
   };
 
@@ -1916,11 +1916,11 @@ export default function App() {
   );
 
   // AGRUPAR FORMULARIOS POR FECHA
-  const sortedForms = [...formulariosGuardados].sort((a,b) => b.timestamp - a.timestamp);
+  const sortedForms = [...formulariosGuardados].sort((a, b) => b.timestamp - a.timestamp);
   const groupedForms = sortedForms.reduce((acc, form) => {
-      if (!acc[form.fecha]) acc[form.fecha] = [];
-      acc[form.fecha].push(form);
-      return acc;
+    if (!acc[form.fecha]) acc[form.fecha] = [];
+    acc[form.fecha].push(form);
+    return acc;
   }, {});
 
   if (!appRole) return (
@@ -1929,14 +1929,14 @@ export default function App() {
         <button onClick={() => setShowSettingsAuth(true)} className="p-3 rounded-full hover:bg-slate-800 transition-colors group bg-slate-800/30" title="Configuración">
           <Settings className="w-7 h-7 text-slate-400 group-hover:text-slate-300 group-hover:rotate-90 transition-all duration-300" />
         </button>
-        <button 
+        <button
           onClick={() => {
-            if(window.confirm('¿Estás seguro de limpiar la memoria local? Esto recargará la aplicación y solucionará problemas de caché.')) {
+            if (window.confirm('¿Estás seguro de limpiar la memoria local? Esto recargará la aplicación y solucionará problemas de caché.')) {
               localStorage.clear();
               sessionStorage.clear();
               window.location.reload();
             }
-          }} 
+          }}
           className="p-2 bg-slate-800/30 hover:bg-red-600/90 text-slate-500 hover:text-white rounded-full transition-all flex items-center justify-center shadow-sm"
           title="Limpiar Memoria Local (Caché)"
         >
@@ -1946,9 +1946,9 @@ export default function App() {
 
       <div className="text-center mb-10 w-full max-w-2xl mt-12 sm:mt-0">
         <div className="w-32 h-32 mx-auto mb-6 rounded-full overflow-hidden shadow-2xl ring-4 ring-fuchsia-500/30 flex items-center justify-center bg-white">
-          <img 
-            src="./Logo canal.jpg" 
-            alt="Tajamar TV" 
+          <img
+            src="./Logo canal.jpg"
+            alt="Tajamar TV"
             className="w-full h-full object-cover scale-105"
             onError={(e) => {
               e.target.onerror = null;
@@ -1959,7 +1959,7 @@ export default function App() {
         <h1 className="text-3xl font-bold text-white mb-2">{appTitle}</h1>
         <p className="text-slate-400">Selecciona tu perfil de ingreso</p>
       </div>
-      
+
       <div className="flex flex-col sm:flex-row gap-6 w-full max-w-2xl">
         <button onClick={() => setShowAdminLogin(true)} className="flex-1 bg-white p-8 rounded-3xl hover:bg-indigo-50 border-4 border-transparent hover:border-indigo-500 transition-all text-center group shadow-xl">
           <div className="bg-indigo-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform text-indigo-600"><Lock className="w-10 h-10" /></div>
@@ -1984,13 +1984,13 @@ export default function App() {
       {showArchive && (
         <div className="fixed inset-0 bg-slate-50 z-50 flex flex-col animate-in slide-in-from-bottom-5">
           <header className="bg-slate-900 text-white p-4 flex items-center gap-4 shadow-md shrink-0">
-            <button onClick={() => setShowArchive(false)} className="p-2 hover:bg-slate-800 rounded-full transition-colors"><ArrowLeft className="w-6 h-6"/></button>
+            <button onClick={() => setShowArchive(false)} className="p-2 hover:bg-slate-800 rounded-full transition-colors"><ArrowLeft className="w-6 h-6" /></button>
             <div>
               <h2 className="text-xl font-bold">Archivo de Formularios</h2>
               <p className="text-xs text-slate-400">Registros guardados en la nube</p>
             </div>
           </header>
-          
+
           <div className="flex-1 overflow-y-auto p-4 sm:p-6 custom-scrollbar bg-slate-50">
             <div className="max-w-3xl mx-auto space-y-6">
               {Object.keys(groupedForms).length === 0 ? (
@@ -2014,10 +2014,10 @@ export default function App() {
                               {form.tipo}
                             </span>
                             <h3 className="font-bold text-slate-800 mt-2 flex items-center gap-2">
-                              {form.tipo === 'REPORTE GENERAL' ? <Monitor className="w-4 h-4 text-slate-400"/> : <Truck className="w-4 h-4 text-slate-400"/>}
+                              {form.tipo === 'REPORTE GENERAL' ? <Monitor className="w-4 h-4 text-slate-400" /> : <Truck className="w-4 h-4 text-slate-400" />}
                               {form.autor}
                             </h3>
-                            <p className="text-xs text-slate-500 mt-1 flex items-center gap-1"><Clock className="w-3 h-3"/> {new Date(form.timestamp).toLocaleTimeString('es-AR')}</p>
+                            <p className="text-xs text-slate-500 mt-1 flex items-center gap-1"><Clock className="w-3 h-3" /> {new Date(form.timestamp).toLocaleTimeString('es-AR')}</p>
                           </div>
                           <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-indigo-500 transition-colors" />
                         </div>
@@ -2035,13 +2035,13 @@ export default function App() {
       {selectedFormDetail && (
         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[60] flex flex-col items-center justify-center p-4">
           <div className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl relative animate-in zoom-in-95">
-            <button onClick={() => setSelectedFormDetail(null)} className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 rounded-full transition-colors"><X className="w-5 h-5"/></button>
+            <button onClick={() => setSelectedFormDetail(null)} className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 rounded-full transition-colors"><X className="w-5 h-5" /></button>
             <div className="mb-4 pr-8">
               <span className="text-xs font-bold bg-slate-100 text-slate-600 px-2 py-1 rounded-md">{selectedFormDetail.tipo}</span>
               <h2 className="text-xl font-bold text-slate-800 mt-2">{selectedFormDetail.autor}</h2>
               <p className="text-xs text-slate-500">{selectedFormDetail.fecha} - {new Date(selectedFormDetail.timestamp).toLocaleTimeString('es-AR')}</p>
             </div>
-            
+
             <div className="bg-slate-50 rounded-2xl border border-slate-200 p-4 space-y-3 text-sm text-slate-700">
               {selectedFormDetail.tipo === 'REPORTE GENERAL' ? (
                 <div><strong>Total Tareas Activas:</strong> {selectedFormDetail.datos.totalTareas}</div>
@@ -2082,20 +2082,20 @@ export default function App() {
       {showSettingsAuth && (
         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center p-4">
           <div className="bg-white rounded-3xl p-8 w-full max-w-sm shadow-2xl relative animate-in zoom-in-95">
-            <button onClick={() => {setShowSettingsAuth(false); setSettingsLoginError(false); setSettingsPassword('');}} className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 rounded-full transition-colors"><X className="w-5 h-5"/></button>
+            <button onClick={() => { setShowSettingsAuth(false); setSettingsLoginError(false); setSettingsPassword(''); }} className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 rounded-full transition-colors"><X className="w-5 h-5" /></button>
             <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-500"><Settings className="w-8 h-8" /></div>
             <h2 className="text-2xl font-bold text-center text-slate-800 mb-2">Acceso Configuración</h2>
             <form onSubmit={(e) => {
               e.preventDefault();
-              if (settingsPassword === validSettingsPassword) { 
-                setShowSettingsModal(true); 
-                setShowSettingsAuth(false); 
-                setSettingsLoginError(false); 
-                setSettingsPassword(''); 
+              if (settingsPassword === validSettingsPassword) {
+                setShowSettingsModal(true);
+                setShowSettingsAuth(false);
+                setSettingsLoginError(false);
+                setSettingsPassword('');
               } else setSettingsLoginError(true);
             }}>
               <div className="mb-4">
-                <input type="password" placeholder="Contraseña" value={settingsPassword} onChange={(e) => {setSettingsPassword(e.target.value); setSettingsLoginError(false);}} className={`w-full p-4 border rounded-2xl outline-none focus:ring-2 transition-all text-center tracking-widest ${settingsLoginError ? 'border-red-400 focus:ring-red-200' : 'border-slate-300 focus:ring-slate-200'}`} autoFocus />
+                <input type="password" placeholder="Contraseña" value={settingsPassword} onChange={(e) => { setSettingsPassword(e.target.value); setSettingsLoginError(false); }} className={`w-full p-4 border rounded-2xl outline-none focus:ring-2 transition-all text-center tracking-widest ${settingsLoginError ? 'border-red-400 focus:ring-red-200' : 'border-slate-300 focus:ring-slate-200'}`} autoFocus />
                 {settingsLoginError && <p className="text-red-500 text-xs font-bold mt-2 ml-1 text-center animate-pulse">Clave incorrecta.</p>}
               </div>
               <button type="submit" className="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-4 rounded-2xl shadow-md">Ingresar</button>
@@ -2114,8 +2114,8 @@ export default function App() {
                 </div>
                 <h2 className="text-xl font-bold text-slate-800">Configuración</h2>
               </div>
-              <button onClick={() => { setShowSettingsModal(false); setEditingMovil(null); setDeleteConfirmMovil(null); setMovilManageError(''); setResolucionManageError(''); setEditingResolucion(null); setTitleUpdateMsg({text:'', type:''}); }} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
-                <X className="w-6 h-6"/>
+              <button onClick={() => { setShowSettingsModal(false); setEditingMovil(null); setDeleteConfirmMovil(null); setMovilManageError(''); setResolucionManageError(''); setEditingResolucion(null); setTitleUpdateMsg({ text: '', type: '' }); }} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
+                <X className="w-6 h-6" />
               </button>
             </div>
             <div className="space-y-4 overflow-y-auto pr-2 pb-2 custom-scrollbar flex-1">
@@ -2133,7 +2133,7 @@ export default function App() {
                   <p className="text-sm font-bold text-slate-700">Medición de Tiempos</p>
                   <p className="text-xs text-slate-500">Activado para Reporte PDF</p>
                 </div>
-                <button 
+                <button
                   onClick={() => setIsTimeTrackingEnabled(!isTimeTrackingEnabled)}
                   className={`w-12 h-6 rounded-full transition-colors relative flex items-center ${isTimeTrackingEnabled ? 'bg-indigo-600' : 'bg-slate-300'}`}
                 >
@@ -2144,32 +2144,32 @@ export default function App() {
               {/* GESTIÓN DE MÓVILES (Nuevo Panel) */}
               <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex flex-col gap-3">
                 <p className="text-sm font-bold text-slate-700 flex items-center gap-2"><Truck className="w-4 h-4" /> Gestión de Flota (Móviles)</p>
-                
+
                 <div className="flex flex-col gap-2">
                   {movilesList.map(m => (
                     <div key={m} className="flex gap-2 items-center bg-white p-2 rounded-lg border border-slate-200 shadow-sm">
                       {editingMovil?.old === m ? (
-                        <input 
-                          type="text" 
-                          value={editingMovil.new} 
-                          onChange={(e) => setEditingMovil({...editingMovil, new: e.target.value.toUpperCase()})} 
+                        <input
+                          type="text"
+                          value={editingMovil.new}
+                          onChange={(e) => setEditingMovil({ ...editingMovil, new: e.target.value.toUpperCase() })}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') {
                               const newName = editingMovil.new.trim();
                               if (!newName || newName === m) { setEditingMovil(null); return; }
                               if (movilesList.includes(newName)) { setMovilManageError('El nombre ya existe.'); return; }
-                              
+
                               const updatedMoviles = movilesList.map(mov => mov === m ? newName : mov);
                               const updatedPasswords = { ...movilPasswords };
                               updatedPasswords[newName] = updatedPasswords[m] || '1234';
                               delete updatedPasswords[m];
-                              
+
                               setMovilesList(updatedMoviles);
                               setMovilPasswords(updatedPasswords);
                               setEditingMovil(null);
                               setMovilManageError('');
                               saveConfigToFirebase({ moviles: updatedMoviles, passwords: updatedPasswords });
-                              
+
                               tasks.forEach(t => {
                                 if (t.movil === m) handleUpdateTask(t.id, 'movil', newName);
                               });
@@ -2181,36 +2181,36 @@ export default function App() {
                       ) : (
                         <span className="flex-1 text-sm font-bold text-slate-700 pl-1">{m}</span>
                       )}
-                      
+
                       {editingMovil?.old === m ? (
                         <>
                           <button onClick={async () => {
                             const newName = editingMovil.new.trim();
                             if (!newName || newName === m) { setEditingMovil(null); return; }
                             if (movilesList.includes(newName)) { setMovilManageError('El nombre ya existe.'); return; }
-                            
+
                             const updatedMoviles = movilesList.map(mov => mov === m ? newName : mov);
                             const updatedPasswords = { ...movilPasswords };
                             updatedPasswords[newName] = updatedPasswords[m] || '1234';
                             delete updatedPasswords[m];
-                            
+
                             setMovilesList(updatedMoviles);
                             setMovilPasswords(updatedPasswords);
                             setEditingMovil(null);
                             setMovilManageError('');
                             saveConfigToFirebase({ moviles: updatedMoviles, passwords: updatedPasswords });
-                            
+
                             // Reasignar tareas con el viejo nombre
                             tasks.forEach(t => {
                               if (t.movil === m) handleUpdateTask(t.id, 'movil', newName);
                             });
-                          }} className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded transition-colors"><CheckCircle className="w-4 h-4"/></button>
-                          <button onClick={() => { setEditingMovil(null); setMovilManageError(''); }} className="p-1.5 text-slate-400 hover:bg-slate-100 rounded transition-colors"><X className="w-4 h-4"/></button>
+                          }} className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded transition-colors"><CheckCircle className="w-4 h-4" /></button>
+                          <button onClick={() => { setEditingMovil(null); setMovilManageError(''); }} className="p-1.5 text-slate-400 hover:bg-slate-100 rounded transition-colors"><X className="w-4 h-4" /></button>
                         </>
                       ) : (
                         <>
-                          <button onClick={() => { setEditingMovil({old: m, new: m}); setMovilManageError(''); setDeleteConfirmMovil(null); }} className="text-xs text-indigo-600 font-bold px-2 py-1.5 hover:bg-indigo-50 rounded transition-colors">Renombrar</button>
-                          <button onClick={() => { setDeleteConfirmMovil(m); setEditingMovil(null); setMovilManageError(''); }} className="p-1.5 text-red-500 hover:bg-red-50 rounded transition-colors"><Trash2 className="w-4 h-4"/></button>
+                          <button onClick={() => { setEditingMovil({ old: m, new: m }); setMovilManageError(''); setDeleteConfirmMovil(null); }} className="text-xs text-indigo-600 font-bold px-2 py-1.5 hover:bg-indigo-50 rounded transition-colors">Renombrar</button>
+                          <button onClick={() => { setDeleteConfirmMovil(m); setEditingMovil(null); setMovilManageError(''); }} className="p-1.5 text-red-500 hover:bg-red-50 rounded transition-colors"><Trash2 className="w-4 h-4" /></button>
                         </>
                       )}
                     </div>
@@ -2219,7 +2219,7 @@ export default function App() {
 
                 {deleteConfirmMovil && (
                   <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-center animate-in zoom-in-95">
-                    ¿Eliminar <strong>{deleteConfirmMovil}</strong>?<br/>
+                    ¿Eliminar <strong>{deleteConfirmMovil}</strong>?<br />
                     <span className="text-xs text-red-600 font-medium">Las tareas asignadas pasarán a "SIN ASIGNAR".</span>
                     <div className="flex justify-center gap-2 mt-2">
                       <button onClick={() => setDeleteConfirmMovil(null)} className="px-3 py-1.5 bg-slate-200 text-slate-700 rounded-md font-bold text-xs hover:bg-slate-300 transition-colors">Cancelar</button>
@@ -2227,12 +2227,12 @@ export default function App() {
                         const updatedMoviles = movilesList.filter(mov => mov !== deleteConfirmMovil);
                         const updatedPasswords = { ...movilPasswords };
                         delete updatedPasswords[deleteConfirmMovil];
-                        
+
                         setMovilesList(updatedMoviles);
                         setMovilPasswords(updatedPasswords);
                         setDeleteConfirmMovil(null);
                         saveConfigToFirebase({ moviles: updatedMoviles, passwords: updatedPasswords });
-                        
+
                         tasks.forEach(t => {
                           if (t.movil === deleteConfirmMovil) handleUpdateTask(t.id, 'movil', 'SIN ASIGNAR');
                         });
@@ -2244,10 +2244,10 @@ export default function App() {
                 {movilManageError && <p className="text-xs text-red-500 font-bold text-center mt-1">{movilManageError}</p>}
 
                 <div className="flex gap-2 mt-1">
-                  <input 
-                    type="text" 
-                    value={newMovilName} 
-                    onChange={(e) => { setNewMovilName(e.target.value.toUpperCase()); setMovilManageError(''); }} 
+                  <input
+                    type="text"
+                    value={newMovilName}
+                    onChange={(e) => { setNewMovilName(e.target.value.toUpperCase()); setMovilManageError(''); }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         const name = newMovilName.trim();
@@ -2261,10 +2261,10 @@ export default function App() {
                         saveConfigToFirebase({ moviles: updatedMoviles, passwords: updatedPasswords });
                       }
                     }}
-                    placeholder="Nuevo Móvil..." 
+                    placeholder="Nuevo Móvil..."
                     className="flex-1 p-2 border border-slate-300 rounded-lg text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500"
                   />
-                  <button 
+                  <button
                     onClick={() => {
                       const name = newMovilName.trim();
                       if (!name) return;
@@ -2275,7 +2275,7 @@ export default function App() {
                       setMovilPasswords(updatedPasswords);
                       setNewMovilName('');
                       saveConfigToFirebase({ moviles: updatedMoviles, passwords: updatedPasswords });
-                    }} 
+                    }}
                     className="bg-slate-800 hover:bg-slate-900 text-white font-bold px-4 py-2 rounded-lg text-sm transition-colors shadow-sm"
                   >
                     Agregar
@@ -2285,16 +2285,16 @@ export default function App() {
 
               <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex flex-col gap-3">
                 <p className="text-sm font-bold text-slate-700 flex items-center gap-2"><Lock className="w-4 h-4" /> Clave Coordinador</p>
-                <input type="password" placeholder="Nueva clave" value={newAdminPwd} onChange={(e) => {setNewAdminPwd(e.target.value); setPwdUpdateMsg({text:'', type:''});}} className="w-full p-2.5 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-slate-400" />
-                <input type="password" placeholder="Confirmar" value={confirmAdminPwd} onChange={(e) => {setConfirmAdminPwd(e.target.value); setPwdUpdateMsg({text:'', type:''});}} className="w-full p-2.5 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-slate-400" />
+                <input type="password" placeholder="Nueva clave" value={newAdminPwd} onChange={(e) => { setNewAdminPwd(e.target.value); setPwdUpdateMsg({ text: '', type: '' }); }} className="w-full p-2.5 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-slate-400" />
+                <input type="password" placeholder="Confirmar" value={confirmAdminPwd} onChange={(e) => { setConfirmAdminPwd(e.target.value); setPwdUpdateMsg({ text: '', type: '' }); }} className="w-full p-2.5 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-slate-400" />
                 <button onClick={() => {
                   if (newAdminPwd.trim() === '') setPwdUpdateMsg({ text: 'No puede estar vacía.', type: 'error' });
                   else if (newAdminPwd !== confirmAdminPwd) setPwdUpdateMsg({ text: 'No coinciden.', type: 'error' });
-                  else { 
-                    setValidAdminPassword(newAdminPwd); 
-                    setPwdUpdateMsg({ text: '¡Clave actualizada!', type: 'success' }); 
-                    setNewAdminPwd(''); 
-                    setConfirmAdminPwd(''); 
+                  else {
+                    setValidAdminPassword(newAdminPwd);
+                    setPwdUpdateMsg({ text: '¡Clave actualizada!', type: 'success' });
+                    setNewAdminPwd('');
+                    setConfirmAdminPwd('');
                     saveConfigToFirebase({ adminPwd: newAdminPwd });
                   }
                 }} className="w-full bg-slate-200 text-slate-800 font-bold py-2 rounded-lg text-sm hover:bg-slate-300 transition-colors">Actualizar</button>
@@ -2303,16 +2303,16 @@ export default function App() {
 
               <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex flex-col gap-3">
                 <p className="text-sm font-bold text-slate-700 flex items-center gap-2"><Lock className="w-4 h-4" /> Clave Configuración</p>
-                <input type="password" placeholder="Nueva clave" value={newSettingsPwd} onChange={(e) => {setNewSettingsPwd(e.target.value); setSettingsPwdUpdateMsg({text:'', type:''});}} className="w-full p-2.5 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-slate-400" />
-                <input type="password" placeholder="Confirmar" value={confirmSettingsPwd} onChange={(e) => {setConfirmSettingsPwd(e.target.value); setSettingsPwdUpdateMsg({text:'', type:''});}} className="w-full p-2.5 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-slate-400" />
+                <input type="password" placeholder="Nueva clave" value={newSettingsPwd} onChange={(e) => { setNewSettingsPwd(e.target.value); setSettingsPwdUpdateMsg({ text: '', type: '' }); }} className="w-full p-2.5 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-slate-400" />
+                <input type="password" placeholder="Confirmar" value={confirmSettingsPwd} onChange={(e) => { setConfirmSettingsPwd(e.target.value); setSettingsPwdUpdateMsg({ text: '', type: '' }); }} className="w-full p-2.5 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-slate-400" />
                 <button onClick={() => {
                   if (newSettingsPwd.trim() === '') setSettingsPwdUpdateMsg({ text: 'No puede estar vacía.', type: 'error' });
                   else if (newSettingsPwd !== confirmSettingsPwd) setSettingsPwdUpdateMsg({ text: 'No coinciden.', type: 'error' });
-                  else { 
-                    setValidSettingsPassword(newSettingsPwd); 
-                    setSettingsPwdUpdateMsg({ text: '¡Clave actualizada!', type: 'success' }); 
-                    setNewSettingsPwd(''); 
-                    setConfirmSettingsPwd(''); 
+                  else {
+                    setValidSettingsPassword(newSettingsPwd);
+                    setSettingsPwdUpdateMsg({ text: '¡Clave actualizada!', type: 'success' });
+                    setNewSettingsPwd('');
+                    setConfirmSettingsPwd('');
                     saveConfigToFirebase({ settingsPwd: newSettingsPwd });
                   }
                 }} className="w-full bg-slate-200 text-slate-800 font-bold py-2 rounded-lg text-sm hover:bg-slate-300 transition-colors">Actualizar</button>
@@ -2324,18 +2324,18 @@ export default function App() {
                 <select value={selectedMovilEdit || (movilesList[0] || '')} onChange={(e) => setSelectedMovilEdit(e.target.value)} className="w-full p-2.5 border rounded-lg text-sm outline-none font-bold text-slate-700">
                   {movilesList.map(m => <option key={m} value={m}>{m}</option>)}
                 </select>
-                <input type="password" placeholder="Nueva clave" value={newMovilPwd} onChange={(e) => {setNewMovilPwd(e.target.value); setMovilPwdUpdateMsg({text:'', type:''});}} className="w-full p-2.5 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-slate-400" />
-                <input type="password" placeholder="Confirmar" value={confirmMovilPwd} onChange={(e) => {setConfirmMovilPwd(e.target.value); setMovilPwdUpdateMsg({text:'', type:''});}} className="w-full p-2.5 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-slate-400" />
+                <input type="password" placeholder="Nueva clave" value={newMovilPwd} onChange={(e) => { setNewMovilPwd(e.target.value); setMovilPwdUpdateMsg({ text: '', type: '' }); }} className="w-full p-2.5 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-slate-400" />
+                <input type="password" placeholder="Confirmar" value={confirmMovilPwd} onChange={(e) => { setConfirmMovilPwd(e.target.value); setMovilPwdUpdateMsg({ text: '', type: '' }); }} className="w-full p-2.5 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-slate-400" />
                 <button onClick={() => {
                   const targetMovil = selectedMovilEdit || movilesList[0];
                   if (newMovilPwd.trim() === '') setMovilPwdUpdateMsg({ text: 'No puede estar vacía.', type: 'error' });
                   else if (newMovilPwd !== confirmMovilPwd) setMovilPwdUpdateMsg({ text: 'No coinciden.', type: 'error' });
-                  else { 
+                  else {
                     const updatedPasswords = { ...movilPasswords, [targetMovil]: newMovilPwd };
-                    setMovilPasswords(updatedPasswords); 
-                    setMovilPwdUpdateMsg({ text: `¡Clave actualizada!`, type: 'success' }); 
-                    setNewMovilPwd(''); 
-                    setConfirmMovilPwd(''); 
+                    setMovilPasswords(updatedPasswords);
+                    setMovilPwdUpdateMsg({ text: `¡Clave actualizada!`, type: 'success' });
+                    setNewMovilPwd('');
+                    setConfirmMovilPwd('');
                     saveConfigToFirebase({ passwords: updatedPasswords });
                   }
                 }} className="w-full bg-slate-200 text-slate-800 font-bold py-2 rounded-lg text-sm hover:bg-slate-300 transition-colors">Actualizar</button>
@@ -2349,16 +2349,16 @@ export default function App() {
                   {resolucionOpciones.map(res => (
                     <div key={res} className="flex justify-between items-center bg-white p-2 rounded-lg border border-slate-200 shadow-sm gap-2">
                       {editingResolucion?.old === res ? (
-                        <input 
-                          type="text" 
-                          value={editingResolucion.new} 
-                          onChange={(e) => setEditingResolucion({...editingResolucion, new: e.target.value})} 
+                        <input
+                          type="text"
+                          value={editingResolucion.new}
+                          onChange={(e) => setEditingResolucion({ ...editingResolucion, new: e.target.value })}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') {
                               const newName = editingResolucion.new.trim();
                               if (!newName || newName === res) { setEditingResolucion(null); return; }
                               if (resolucionOpciones.includes(newName)) { setResolucionManageError('La opción ya existe.'); return; }
-                              
+
                               const updatedRes = resolucionOpciones.map(r => r === res ? newName : r);
                               setResolucionOpciones(updatedRes);
                               setEditingResolucion(null);
@@ -2379,23 +2379,23 @@ export default function App() {
                             const newName = editingResolucion.new.trim();
                             if (!newName || newName === res) { setEditingResolucion(null); return; }
                             if (resolucionOpciones.includes(newName)) { setResolucionManageError('La opción ya existe.'); return; }
-                            
+
                             const updatedRes = resolucionOpciones.map(r => r === res ? newName : r);
                             setResolucionOpciones(updatedRes);
                             setEditingResolucion(null);
                             setResolucionManageError('');
                             saveConfigToFirebase({ resoluciones: updatedRes });
-                          }} className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded transition-colors"><CheckCircle className="w-4 h-4"/></button>
-                          <button onClick={() => { setEditingResolucion(null); setResolucionManageError(''); }} className="p-1.5 text-slate-400 hover:bg-slate-100 rounded transition-colors"><X className="w-4 h-4"/></button>
+                          }} className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded transition-colors"><CheckCircle className="w-4 h-4" /></button>
+                          <button onClick={() => { setEditingResolucion(null); setResolucionManageError(''); }} className="p-1.5 text-slate-400 hover:bg-slate-100 rounded transition-colors"><X className="w-4 h-4" /></button>
                         </div>
                       ) : (
                         <div className="flex gap-1 shrink-0">
-                          <button onClick={() => { setEditingResolucion({old: res, new: res}); setResolucionManageError(''); }} className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded transition-colors"><Pencil className="w-4 h-4"/></button>
+                          <button onClick={() => { setEditingResolucion({ old: res, new: res }); setResolucionManageError(''); }} className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded transition-colors"><Pencil className="w-4 h-4" /></button>
                           <button onClick={() => {
                             const updatedRes = resolucionOpciones.filter(r => r !== res);
                             setResolucionOpciones(updatedRes);
                             saveConfigToFirebase({ resoluciones: updatedRes });
-                          }} className="p-1.5 text-red-500 hover:bg-red-50 rounded transition-colors"><Trash2 className="w-4 h-4"/></button>
+                          }} className="p-1.5 text-red-500 hover:bg-red-50 rounded transition-colors"><Trash2 className="w-4 h-4" /></button>
                         </div>
                       )}
                     </div>
@@ -2403,10 +2403,10 @@ export default function App() {
                 </div>
                 {resolucionManageError && <p className="text-xs text-red-500 font-bold text-center mt-1">{resolucionManageError}</p>}
                 <div className="flex gap-2 mt-1">
-                  <input 
-                    type="text" 
-                    value={newResolucion} 
-                    onChange={(e) => { setNewResolucion(e.target.value); setResolucionManageError(''); }} 
+                  <input
+                    type="text"
+                    value={newResolucion}
+                    onChange={(e) => { setNewResolucion(e.target.value); setResolucionManageError(''); }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         const name = newResolucion.trim();
@@ -2418,10 +2418,10 @@ export default function App() {
                         saveConfigToFirebase({ resoluciones: updatedRes });
                       }
                     }}
-                    placeholder="Nueva opción..." 
+                    placeholder="Nueva opción..."
                     className="flex-1 p-2 border border-slate-300 rounded-lg text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500"
                   />
-                  <button 
+                  <button
                     onClick={() => {
                       const name = newResolucion.trim();
                       if (!name) return;
@@ -2430,7 +2430,7 @@ export default function App() {
                       setResolucionOpciones(updatedRes);
                       setNewResolucion('');
                       saveConfigToFirebase({ resoluciones: updatedRes });
-                    }} 
+                    }}
                     className="bg-slate-800 hover:bg-slate-900 text-white font-bold px-3 py-2 rounded-lg text-sm transition-colors shadow-sm"
                   >
                     Agregar
@@ -2441,11 +2441,11 @@ export default function App() {
               {/* PERSONALIZACIÓN DE TÍTULOS (Nuevo Panel) */}
               <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex flex-col gap-3">
                 <p className="text-sm font-bold text-slate-700 flex items-center gap-2"><Type className="w-4 h-4" /> Personalización de Títulos</p>
-                
+
                 <div>
                   <label className="text-xs font-semibold text-slate-500 mb-1 block">Título Menú Principal</label>
                   <div className="flex gap-2">
-                    <input type="text" placeholder={appTitle} value={newAppTitle} onChange={(e) => {setNewAppTitle(e.target.value); setTitleUpdateMsg({text:'', type:''});}} className="flex-1 p-2 border border-slate-300 rounded-lg text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500" />
+                    <input type="text" placeholder={appTitle} value={newAppTitle} onChange={(e) => { setNewAppTitle(e.target.value); setTitleUpdateMsg({ text: '', type: '' }); }} className="flex-1 p-2 border border-slate-300 rounded-lg text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500" />
                     <button onClick={() => {
                       if (!newAppTitle.trim()) return;
                       setAppTitle(newAppTitle);
@@ -2459,7 +2459,7 @@ export default function App() {
                 <div>
                   <label className="text-xs font-semibold text-slate-500 mb-1 block">Título Panel Coordinador</label>
                   <div className="flex gap-2">
-                    <input type="text" placeholder={adminTitle} value={newAdminTitle} onChange={(e) => {setNewAdminTitle(e.target.value); setTitleUpdateMsg({text:'', type:''});}} className="flex-1 p-2 border border-slate-300 rounded-lg text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500" />
+                    <input type="text" placeholder={adminTitle} value={newAdminTitle} onChange={(e) => { setNewAdminTitle(e.target.value); setTitleUpdateMsg({ text: '', type: '' }); }} className="flex-1 p-2 border border-slate-300 rounded-lg text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500" />
                     <button onClick={() => {
                       if (!newAdminTitle.trim()) return;
                       setAdminTitle(newAdminTitle);
@@ -2473,7 +2473,7 @@ export default function App() {
               </div>
 
             </div>
-            <button onClick={() => { setShowSettingsModal(false); setEditingMovil(null); setDeleteConfirmMovil(null); setMovilManageError(''); setResolucionManageError(''); setEditingResolucion(null); setTitleUpdateMsg({text:'', type:''}); }} className="w-full mt-4 bg-slate-800 text-white font-bold py-3.5 rounded-2xl shrink-0 hover:bg-slate-900 transition-colors shadow-md">Cerrar</button>
+            <button onClick={() => { setShowSettingsModal(false); setEditingMovil(null); setDeleteConfirmMovil(null); setMovilManageError(''); setResolucionManageError(''); setEditingResolucion(null); setTitleUpdateMsg({ text: '', type: '' }); }} className="w-full mt-4 bg-slate-800 text-white font-bold py-3.5 rounded-2xl shrink-0 hover:bg-slate-900 transition-colors shadow-md">Cerrar</button>
           </div>
         </div>
       )}
@@ -2481,7 +2481,7 @@ export default function App() {
       {showAdminLogin && (
         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center p-4">
           <div className="bg-white rounded-3xl p-8 w-full max-w-sm shadow-2xl relative animate-in zoom-in-95">
-            <button onClick={() => {setShowAdminLogin(false); setLoginError(false); setAdminPassword('');}} className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 rounded-full transition-colors"><X className="w-5 h-5"/></button>
+            <button onClick={() => { setShowAdminLogin(false); setLoginError(false); setAdminPassword(''); }} className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 rounded-full transition-colors"><X className="w-5 h-5" /></button>
             <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4 text-indigo-600"><Monitor className="w-8 h-8" /></div>
             <h2 className="text-2xl font-bold text-center text-slate-800 mb-2">Acceso Coordinador</h2>
             <form onSubmit={(e) => {
@@ -2490,7 +2490,7 @@ export default function App() {
               else setLoginError(true);
             }}>
               <div className="mb-4">
-                <input type="password" placeholder="Contraseña" value={adminPassword} onChange={(e) => {setAdminPassword(e.target.value); setLoginError(false);}} className={`w-full p-4 border rounded-2xl outline-none focus:ring-2 text-center tracking-widest ${loginError ? 'border-red-400 focus:ring-red-200' : 'border-slate-300 focus:ring-indigo-200'}`} autoFocus />
+                <input type="password" placeholder="Contraseña" value={adminPassword} onChange={(e) => { setAdminPassword(e.target.value); setLoginError(false); }} className={`w-full p-4 border rounded-2xl outline-none focus:ring-2 text-center tracking-widest ${loginError ? 'border-red-400 focus:ring-red-200' : 'border-slate-300 focus:ring-indigo-200'}`} autoFocus />
                 {loginError && <p className="text-red-500 text-xs font-bold mt-2 ml-1 text-center animate-pulse">Clave incorrecta.</p>}
               </div>
               <button type="submit" className="w-full bg-indigo-600 text-white font-bold py-4 rounded-2xl shadow-md">Ingresar</button>
