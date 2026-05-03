@@ -1,28 +1,33 @@
-﻿import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   MapPin, Calendar, AlertCircle, Truck, Filter, Map as MapIcon,
   Clock, User, Hash, CheckCircle, Download, Cloud, CloudOff,
   Loader2, Navigation, LogOut, Monitor, Smartphone, ChevronRight,
   Play, ChevronDown, ChevronUp, FileText, Package, X, Upload,
   Printer, RefreshCw, PhoneCall, MessageCircle, Lock, KeyRound, Trash2, Settings, Camera, UserX,
-  ClipboardCheck, List, ArrowLeft, Gauge, Fuel, BookOpen, Wifi, QrCode, Type, Pencil, Archive, FolderOpen
+  ClipboardCheck, List, ArrowLeft, Gauge, Fuel, BookOpen, Wifi, QrCode, Type, Pencil, Archive, FolderOpen, Image as ImageIcon
 } from 'lucide-react';
 import { initializeApp } from 'firebase/app';
-import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
+import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore, collection, doc, onSnapshot, setDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 
 // --- 1. CONFIGURACIÓN FIREBASE ---
+
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
+
+// Inicializamos la app con el objeto que tiene tus datos
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+
+// Para tu ID de aplicación personalizada
 const appId = import.meta.env.VITE_APP_ID || 'default-app-id';
 
 const prioridades = ['1-CRÍTICA', '2-ALTA', '3-MEDIA', '4-BAJA'];
@@ -377,7 +382,7 @@ function AdminDashboard({ tasks, onUpdateTask, syncStatus, onLogout, isTimeTrack
 
       doc.setFontSize(10);
       doc.setTextColor(148, 163, 184);
-      doc.text(`Centro Operativo Alta Gracia - Generado por Sistema Gestor de Tareas!`, 14, doc.internal.pageSize.height - 10);
+      doc.text(`Centro Operativo Alta Gracia - Generado por Sistema Gestor de Tareas`, 14, doc.internal.pageSize.height - 10);
 
       const fileName = `Reporte_General_${new Date().toLocaleDateString('es-AR').replace(/\//g, '-')}.pdf`;
       doc.save(fileName);
@@ -622,7 +627,7 @@ function AdminDashboard({ tasks, onUpdateTask, syncStatus, onLogout, isTimeTrack
         </div>
       )}
 
-      <header className="bg-indigo-700 text-white shadow-md sticky top-0 z-20">
+      <header className="bg-[#94288f] text-white shadow-md sticky top-0 z-20">
         <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-3">
             <Monitor className="w-8 h-8 text-indigo-200" />
@@ -645,21 +650,55 @@ function AdminDashboard({ tasks, onUpdateTask, syncStatus, onLogout, isTimeTrack
             </button>
           </div>
         </div>
+        <div className="bg-slate-50 w-full shadow-sm border-b border-slate-300">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col lg:flex-row gap-6">
+            <div className="w-full lg:w-2/3 flex gap-2 overflow-x-auto no-scrollbar pt-2">
+              {[{ id: 'RECLAMO', label: 'RECLAMOS' }, { id: 'INSTALACION', label: 'INSTALACIONES' }, { id: 'DESCONEXION', label: 'DESCONEXIONES' }, { id: 'FINALIZADAS', label: 'FINALIZADAS' }].map(tab => {
+                const count = tab.id === 'FINALIZADAS'
+                  ? tasks.filter(t => t.estado === 'FINALIZADA').length
+                  : tasks.filter(t => t.tipo === tab.id && t.estado !== 'FINALIZADA').length;
+                return (
+                  <button key={tab.id} onClick={() => setFilterTipo(tab.id)} className={`px-4 py-3 font-bold text-sm uppercase tracking-wide whitespace-nowrap border-b-2 transition-colors flex items-center gap-2 ${filterTipo === tab.id ? 'border-[#94288f] text-[#94288f]' : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'}`}>
+                    {tab.label} <span className={`px-2.5 py-0.5 rounded-full text-sm font-bold shadow-sm ${filterTipo === tab.id ? 'bg-[#94288f] text-white' : 'bg-slate-200 text-slate-700'}`}>{count}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <div className="hidden lg:block lg:w-1/3"></div>
+          </div>
+        </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 flex flex-col lg:flex-row gap-6">
         <div className="w-full lg:w-2/3 flex flex-col gap-4">
-          <div className="flex gap-2 border-b border-slate-300 overflow-x-auto no-scrollbar">
-            {[{ id: 'RECLAMO', label: 'RECLAMOS' }, { id: 'INSTALACION', label: 'INSTALACIONES' }, { id: 'DESCONEXION', label: 'DESCONEXIONES' }, { id: 'FINALIZADAS', label: 'FINALIZADAS' }].map(tab => {
-              const count = tab.id === 'FINALIZADAS'
-                ? tasks.filter(t => t.estado === 'FINALIZADA').length
-                : tasks.filter(t => t.tipo === tab.id && t.estado !== 'FINALIZADA').length;
-              return (
-                <button key={tab.id} onClick={() => setFilterTipo(tab.id)} className={`px-4 py-3 font-bold text-sm uppercase tracking-wide whitespace-nowrap border-b-2 transition-colors flex items-center gap-2 ${filterTipo === tab.id ? 'border-indigo-600 text-indigo-700' : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'}`}>
-                  {tab.label} <span className={`px-2.5 py-0.5 rounded-full text-sm font-bold shadow-sm ${filterTipo === tab.id ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-200 text-slate-700'}`}>{count}</span>
-                </button>
-              );
-            })}
+
+          {/* MAPA GLOBAL DE TAREAS (MOVIDO DEBAJO DE LAS SOLAPAS) */}
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
+              <div>
+                <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                  <MapIcon className="w-5 h-5 text-indigo-600" />
+                  Mapa Global de Tareas
+                </h2>
+                <p className="text-xs text-slate-500 mt-1">
+                  Mostrando {pendingTasksForMap.length} puntos. Dibuja sobre el mapa para asignar tareas en lote.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2 text-[10px] font-semibold text-slate-600 bg-slate-50 p-2 rounded-xl border border-slate-100 shadow-sm">
+                <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-slate-400 shadow-sm border-2 border-white"></span> Sin Asignar</div>
+                <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-emerald-500 shadow-sm border-2 border-white"></span> Asignadas</div>
+                <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-yellow-500 shadow-sm border-2 border-white animate-pulse"></span> En Curso</div>
+                <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-blue-500 shadow-sm border-2 border-white"></span> Finalizadas</div>
+              </div>
+            </div>
+            <div className="w-full h-[400px] sm:h-[500px] bg-slate-100 rounded-xl overflow-hidden shadow-inner border border-slate-300 relative z-0">
+              <iframe title="Mapa General" srcDoc={generateMapHTML(pendingTasksForMap, sortOrder === 'geo', movilesList)} className="w-full h-full border-none"></iframe>
+              {pendingTasksForMap.length === 0 && (
+                <div className="absolute inset-0 flex items-center justify-center bg-slate-100/80 backdrop-blur-sm z-10">
+                  <p className="text-slate-500 font-medium bg-white px-4 py-2 rounded-lg shadow-sm border border-slate-200">No hay tareas en este filtro para mostrar.</p>
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col sm:flex-row gap-4 items-center justify-between">
@@ -785,36 +824,6 @@ function AdminDashboard({ tasks, onUpdateTask, syncStatus, onLogout, isTimeTrack
           </div>
         </div>
       </main>
-
-      <section className="max-w-7xl mx-auto px-4 pb-12 sm:px-6 lg:px-8">
-        <div className="bg-white rounded-2xl shadow-md border border-slate-200 p-4 sm:p-6">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-            <div>
-              <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-                <MapIcon className="w-6 h-6 text-indigo-600" />
-                Mapa Global de Tareas
-              </h2>
-              <p className="text-sm text-slate-500 mt-1">
-                Mostrando {pendingTasksForMap.length} puntos. Dibuja sobre el mapa para asignar tareas en lote.
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-4 text-xs font-semibold text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100 shadow-sm">
-              <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded-full bg-slate-400 shadow-sm border-2 border-white"></span> Sin Asignar</div>
-              <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded-full bg-emerald-500 shadow-sm border-2 border-white"></span> Asignadas</div>
-              <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded-full bg-yellow-500 shadow-sm border-2 border-white animate-pulse"></span> En Curso</div>
-              <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded-full bg-blue-500 shadow-sm border-2 border-white"></span> Finalizadas</div>
-            </div>
-          </div>
-          <div className="w-full h-[450px] sm:h-[600px] bg-slate-100 rounded-xl overflow-hidden shadow-inner border border-slate-300 relative z-0">
-            <iframe title="Mapa General" srcDoc={generateMapHTML(pendingTasksForMap, sortOrder === 'geo', movilesList)} className="w-full h-full border-none"></iframe>
-            {pendingTasksForMap.length === 0 && (
-              <div className="absolute inset-0 flex items-center justify-center bg-slate-100/80 backdrop-blur-sm z-10">
-                <p className="text-slate-500 font-medium bg-white px-4 py-2 rounded-lg shadow-sm border border-slate-200">No hay tareas en este filtro para mostrar.</p>
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
     </div>
   );
 }
@@ -823,23 +832,33 @@ function AdminDashboard({ tasks, onUpdateTask, syncStatus, onLogout, isTimeTrack
 // VISTA: APLICACIÓN MÓVIL DEL TÉCNICO
 // ==========================================
 function TecnicoDashboard({ tasks, onUpdateTask, onLogout, movilPasswords, movilesList, resolucionOpciones, onSaveForm }) {
-  const [miMovil, setMiMovil] = useState(() => localStorage.getItem('miMovil') || null);
+  const getInitialMovil = () => {
+    try { return localStorage.getItem('miMovil') || null; } catch (e) { return null; }
+  };
+  const initialMovil = getInitialMovil();
+  const [miMovil, setMiMovil] = useState(initialMovil);
   const [selectedMovilAuth, setSelectedMovilAuth] = useState(null);
   const [movilPasswordInput, setMovilPasswordInput] = useState('');
   const [movilLoginError, setMovilLoginError] = useState(false);
 
-  // Estados para la navegación del técnico
-  const [techView, setTechView] = useState('menu'); // 'menu', 'form', 'tareas', 'manuales'
+  const [techView, setTechView] = useState('menu');
   const [formVehiculo, setFormVehiculo] = useState(() => {
-    const saved = localStorage.getItem('formVehiculo');
-    return saved ? JSON.parse(saved) : { tecnico1: '', tecnico2: '', kmInicial: '', combustible: 'Medio (1/2)', observaciones: '' };
+    if (!initialMovil) return { tecnico1: '', tecnico2: '', kmInicial: '', combustible: 'Medio (1/2)', observaciones: '' };
+    try {
+      const saved = localStorage.getItem(`formVehiculo_${initialMovil}`);
+      return saved ? JSON.parse(saved) : { tecnico1: '', tecnico2: '', kmInicial: '', combustible: 'Medio (1/2)', observaciones: '' };
+    } catch (e) {
+      return { tecnico1: '', tecnico2: '', kmInicial: '', combustible: 'Medio (1/2)', observaciones: '' };
+    }
   });
-  const [isFormCompleted, setIsFormCompleted] = useState(() => localStorage.getItem('isFormCompleted') === 'true');
-  const [dropdownOpen, setDropdownOpen] = useState(null); // Nuevo estado para menús rápidos
+  const [isFormCompleted, setIsFormCompleted] = useState(() => {
+    if (!initialMovil) return false;
+    try { return localStorage.getItem(`isFormCompleted_${initialMovil}`) === 'true'; } catch (e) { return false; }
+  });
+  const [dropdownOpen, setDropdownOpen] = useState(null);
 
   const tecnicosList = ['ACEVEDO', 'ALLENDE', 'ANTONELLO', 'ARROYO', 'DIAZ', 'NAKASONE', 'PARISI', 'PERALTA', 'POWELL', 'RODRIGUEZ', 'SMITH'];
 
-  // Estados de Tareas y PDF
   const [taskToConfirm, setTaskToConfirm] = useState(null);
   const [resolucionTexto, setResolucionTexto] = useState("");
   const [quickSelectVal, setQuickSelectVal] = useState("");
@@ -851,17 +870,14 @@ function TecnicoDashboard({ tasks, onUpdateTask, onLogout, movilPasswords, movil
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [sortOrder, setSortOrder] = useState('prioridad');
 
-  // Estado para el modal final
   const [showKmFinalModal, setShowKmFinalModal] = useState(false);
   const [kmFinal, setKmFinal] = useState('');
 
-  // Estados para Lector de MAC/Serie
   const [macInstalado, setMacInstalado] = useState('');
   const [macRetirado, setMacRetirado] = useState('');
-  const [scanningField, setScanningField] = useState(null); // 'instalado' | 'retirado'
+  const [scanningField, setScanningField] = useState(null);
   const [compressingTaskId, setCompressingTaskId] = useState(null);
 
-  // Estado para zoom de texto
   const [textSizeMultiplier, setTextSizeMultiplier] = useState(1);
 
   const toggleObservacion = (id) => setExpandedObs(prev => ({ ...prev, [id]: !prev[id] }));
@@ -870,11 +886,9 @@ function TecnicoDashboard({ tasks, onUpdateTask, onLogout, movilPasswords, movil
   const toggleAusente = (id) => setExpandedAusente(prev => ({ ...prev, [id]: !prev[id] }));
   const toggleProblema = (id) => setExpandedProblema(prev => ({ ...prev, [id]: !prev[id] }));
 
-  // Carga e inicialización del Lector de Código de Barras/QR
   useEffect(() => {
     let scanner = null;
 
-    // Cargar librería de compresión de imágenes
     if (!window.imageCompression) {
       const scriptCompression = document.createElement('script');
       scriptCompression.src = "https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js";
@@ -893,9 +907,9 @@ function TecnicoDashboard({ tasks, onUpdateTask, onLogout, movilPasswords, movil
           (decodedText) => {
             if (scanningField === 'instalado') setMacInstalado(decodedText);
             if (scanningField === 'retirado') setMacRetirado(decodedText);
-            setScanningField(null); // Cierra el modal automáticamente al leer
+            setScanningField(null);
           },
-          (errorMessage) => { /* se ignora el error de escaneo continuo en fondo */ }
+          (errorMessage) => { }
         );
       }
     };
@@ -929,12 +943,11 @@ function TecnicoDashboard({ tasks, onUpdateTask, onLogout, movilPasswords, movil
     try {
       if (window.imageCompression) {
         const options = {
-          maxSizeMB: 0.4, // Comprimir a máximo 400KB aprox
-          maxWidthOrHeight: 1280, // Resolución máxima razonable para evidencias
+          maxSizeMB: 0.4,
+          maxWidthOrHeight: 1280,
           useWebWorker: true,
         };
         const compressedBlob = await window.imageCompression(file, options);
-        // Reconvertir a File para poder compartirlo nativamente
         fileToShare = new File([compressedBlob], file.name, { type: file.type });
       }
     } catch (error) {
@@ -1042,7 +1055,6 @@ function TecnicoDashboard({ tasks, onUpdateTask, onLogout, movilPasswords, movil
       const fileName = `Reporte_${miMovil.replace(' ', '_')}_${new Date().toLocaleDateString('es-AR').replace(/\//g, '-')}.pdf`;
       doc.save(fileName);
 
-      // Guardar formulario de Cierre de Turno en Firebase
       onSaveForm('CIERRE DE TURNO', miMovil, {
         tecnico1: formVehiculo.tecnico1,
         tecnico2: formVehiculo.tecnico2,
@@ -1066,10 +1078,11 @@ function TecnicoDashboard({ tasks, onUpdateTask, onLogout, movilPasswords, movil
       setTechView('menu');
       setMiMovil(null);
 
-      // Limpiar memoria local al terminar el turno
-      localStorage.removeItem('isFormCompleted');
-      localStorage.removeItem('formVehiculo');
-      localStorage.removeItem('miMovil');
+      try {
+        localStorage.removeItem(`isFormCompleted_${miMovil}`);
+        localStorage.removeItem(`formVehiculo_${miMovil}`);
+        localStorage.removeItem('miMovil');
+      } catch (e) { }
     };
 
     if (window.jspdf && window.jspdf.jsPDF && window.jspdf.jsPDF.API.autoTable) {
@@ -1088,49 +1101,56 @@ function TecnicoDashboard({ tasks, onUpdateTask, onLogout, movilPasswords, movil
   };
 
   const handleFullLogout = () => {
-    // Solo salimos al menú principal. 
-    // Ya no limpiamos el localStorage aquí para que la sesión persista.
+    try {
+      localStorage.removeItem('miMovil');
+    } catch (e) { }
+    setMiMovil(null);
     onLogout();
   };
 
   if (!miMovil) {
     return (
       <div className="min-h-screen bg-slate-100 flex flex-col items-center justify-center p-4 animate-in fade-in w-full max-w-md mx-auto relative">
-        <div className="w-full bg-white p-8 rounded-3xl shadow-xl text-center border border-slate-100 relative">
-          <button onClick={onLogout} className="absolute top-4 right-4 p-2 bg-slate-50 text-slate-400 hover:bg-red-50 hover:text-red-600 rounded-full transition-colors border border-transparent hover:border-red-100">
+        <div className="w-full bg-gradient-to-br from-[#7441de]/80 to-[#ca28cc]/80 backdrop-blur-xl p-8 rounded-3xl shadow-xl text-center border border-white/20 relative">
+          <button onClick={onLogout} className="absolute top-4 right-4 p-2 bg-white/10 text-white/70 hover:bg-red-500 hover:text-white rounded-full transition-colors border border-transparent">
             <X className="w-5 h-5" />
           </button>
-          <div className="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-6 mt-2 text-indigo-600">
+          <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6 mt-2 text-white">
             <Truck className="w-10 h-10" />
           </div>
-          <h1 className="text-2xl font-bold text-slate-800 mb-2">Mi Turno</h1>
-          <p className="text-slate-500 mb-8 text-sm">Selecciona en qué móvil estás operando hoy.</p>
+          <h1 className="text-2xl font-bold text-white mb-2">Mi Turno</h1>
+          <p className="text-white/80 mb-8 text-sm">Selecciona en qué móvil estás operando hoy.</p>
           <div className="grid grid-cols-1 gap-3">
             {movilesList.map(movil => (
-              <button key={movil} onClick={() => setSelectedMovilAuth(movil)} className="w-full py-4 bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-300 text-slate-700 hover:text-indigo-700 font-bold text-lg rounded-2xl transition-all shadow-sm flex justify-between items-center px-6">
+              <button key={movil} onClick={() => setSelectedMovilAuth(movil)} className="w-full py-4 bg-slate-50 hover:bg-slate-200 border-2 border-black text-black font-bold text-lg rounded-2xl transition-all shadow-md flex justify-center items-center">
                 <span>{movil}</span>
-                <ChevronRight className="w-5 h-5 text-slate-400" />
               </button>
             ))}
           </div>
         </div>
         {selectedMovilAuth && (
           <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center p-4">
-            <div className="bg-white rounded-3xl p-8 w-full max-w-sm shadow-2xl relative animate-in zoom-in-95">
-              <button onClick={() => { setSelectedMovilAuth(null); setMovilLoginError(false); setMovilPasswordInput(''); }} className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 rounded-full transition-colors">
+            <div className="bg-gradient-to-br from-[#7441de]/80 to-[#ca28cc]/80 backdrop-blur-xl border border-white/20 rounded-3xl p-8 w-full max-w-sm shadow-2xl relative animate-in zoom-in-95">
+              <button onClick={() => { setSelectedMovilAuth(null); setMovilLoginError(false); setMovilPasswordInput(''); }} className="absolute top-4 right-4 p-2 text-white/70 hover:text-white rounded-full transition-colors">
                 <X className="w-5 h-5" />
               </button>
-              <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4 text-emerald-600">
+              <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 text-white">
                 <KeyRound className="w-8 h-8" />
               </div>
-              <h2 className="text-2xl font-bold text-center text-slate-800 mb-2">Acceso {selectedMovilAuth}</h2>
-              <p className="text-center text-slate-500 text-sm mb-6">Ingresa tu clave asignada para iniciar el turno.</p>
+              <h2 className="text-2xl font-bold text-center text-white mb-2">Acceso {selectedMovilAuth}</h2>
+              <p className="text-center text-white/80 text-sm mb-6">Ingresa tu clave asignada para iniciar el turno.</p>
               <form onSubmit={(e) => {
                 e.preventDefault();
                 const validPassword = movilPasswords[selectedMovilAuth] || '1234';
                 if (movilPasswordInput === validPassword) {
-                  setMiMovil(selectedMovilAuth);
-                  localStorage.setItem('miMovil', selectedMovilAuth);
+                  const nextMovil = selectedMovilAuth;
+                  setMiMovil(nextMovil);
+                  try { 
+                    localStorage.setItem('miMovil', nextMovil); 
+                    const savedForm = localStorage.getItem(`formVehiculo_${nextMovil}`);
+                    setFormVehiculo(savedForm ? JSON.parse(savedForm) : { tecnico1: '', tecnico2: '', kmInicial: '', combustible: 'Medio (1/2)', observaciones: '' });
+                    setIsFormCompleted(localStorage.getItem(`isFormCompleted_${nextMovil}`) === 'true');
+                  } catch (err) { }
                   setSelectedMovilAuth(null);
                   setMovilLoginError(false);
                   setMovilPasswordInput('');
@@ -1155,33 +1175,33 @@ function TecnicoDashboard({ tasks, onUpdateTask, onLogout, movilPasswords, movil
   // --- VISTA: MENÚ PRINCIPAL ---
   if (techView === 'menu') {
     return (
-      <div className="min-h-screen bg-slate-100 flex flex-col p-4 w-full max-w-md mx-auto animate-in slide-in-from-left">
-        <header className="flex justify-between items-center bg-white p-4 rounded-3xl shadow-sm border border-slate-200 mb-6">
+      <div className="min-h-screen bg-gradient-to-br from-[#7441de]/80 to-[#ca28cc]/80 flex flex-col p-4 w-full max-w-md mx-auto animate-in slide-in-from-left">
+        <header className="flex justify-between items-center bg-white p-4 rounded-3xl shadow-sm border-2 border-black mb-6">
           <div className="flex items-center gap-3">
-            <div className="bg-indigo-100 p-2 rounded-xl text-indigo-600"><Truck className="w-5 h-5" /></div>
+            <div className="bg-indigo-100 p-2 rounded-xl text-black"><Truck className="w-5 h-5" /></div>
             <div>
-              <h1 className="text-lg font-bold text-slate-800 leading-none">{miMovil}</h1>
+              <h1 className="text-lg font-bold text-black leading-none">{miMovil}</h1>
               <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-1 mt-1 uppercase tracking-wider">
                 <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span> En línea
               </span>
             </div>
           </div>
-          <button onClick={handleFullLogout} className="p-2 text-slate-400 hover:text-slate-700 bg-slate-50 hover:bg-slate-200 rounded-full transition-colors"><LogOut className="w-5 h-5" /></button>
+          <button onClick={handleFullLogout} className="p-2 text-black hover:text-slate-700 bg-slate-50 hover:bg-slate-200 rounded-full transition-colors"><LogOut className="w-5 h-5" /></button>
         </header>
 
-        <h2 className="text-xl font-bold text-slate-800 mb-4 px-2">Menú Principal</h2>
+        <h2 className="text-xl font-bold text-black mb-4 px-2">Menú Principal</h2>
 
         <div className="flex flex-col gap-4">
           <button
             onClick={() => setTechView('form')}
-            className="p-6 bg-white rounded-3xl shadow-sm border border-slate-200 flex items-center gap-4 hover:border-indigo-400 transition-colors relative overflow-hidden"
+            className="p-6 bg-white rounded-3xl shadow-sm border-2 border-black flex items-center gap-4 hover:bg-slate-50 transition-colors relative overflow-hidden"
           >
-            <div className="w-14 h-14 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center shrink-0"><ClipboardCheck className="w-7 h-7" /></div>
+            <div className="w-14 h-14 bg-indigo-100 text-black rounded-full flex items-center justify-center shrink-0"><ClipboardCheck className="w-7 h-7" /></div>
             <div className="text-left">
-              <h3 className="text-lg font-bold text-slate-800">Formulario Móvil</h3>
-              <p className="text-sm text-slate-500">{isFormCompleted ? 'Completado' : 'Requerido para iniciar'}</p>
+              <h3 className="text-lg font-bold text-black">Formulario Móvil</h3>
+              <p className="text-sm text-black">{isFormCompleted ? 'Completado' : 'Requerido para iniciar'}</p>
             </div>
-            {isFormCompleted ? <CheckCircle className="w-6 h-6 text-emerald-500 absolute right-6 top-1/2 -translate-y-1/2" /> : <ChevronRight className="w-6 h-6 text-slate-300 absolute right-6 top-1/2 -translate-y-1/2" />}
+            {isFormCompleted ? <CheckCircle className="w-6 h-6 text-emerald-600 absolute right-6 top-1/2 -translate-y-1/2" /> : <ChevronRight className="w-6 h-6 text-black absolute right-6 top-1/2 -translate-y-1/2" />}
           </button>
 
           <button
@@ -1189,29 +1209,28 @@ function TecnicoDashboard({ tasks, onUpdateTask, onLogout, movilPasswords, movil
               if (!isFormCompleted) alert('Por favor, completa el Formulario Móvil antes de acceder a tus tareas.');
               else setTechView('tareas');
             }}
-            className={`p-6 rounded-3xl shadow-sm border flex items-center gap-4 transition-colors relative ${isFormCompleted ? 'bg-white border-slate-200 hover:border-emerald-400 cursor-pointer' : 'bg-slate-50 border-slate-200 opacity-70 cursor-not-allowed'}`}
+            className={`p-6 rounded-3xl shadow-sm border-2 border-black flex items-center gap-4 transition-colors relative ${isFormCompleted ? 'bg-white cursor-pointer hover:bg-slate-50' : 'bg-white opacity-70 cursor-not-allowed'}`}
           >
-            <div className={`w-14 h-14 rounded-full flex items-center justify-center shrink-0 ${isFormCompleted ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-200 text-slate-400'}`}>
+            <div className={`w-14 h-14 rounded-full flex items-center justify-center shrink-0 ${isFormCompleted ? 'bg-emerald-100 text-black' : 'bg-slate-200 text-black'}`}>
               <List className="w-7 h-7" />
             </div>
             <div className="text-left">
-              <h3 className="text-lg font-bold text-slate-800">Tareas Asignadas</h3>
-              <p className="text-sm text-slate-500">{misTareas.length} pendientes</p>
+              <h3 className="text-lg font-bold text-black">Tareas Asignadas</h3>
+              <p className="text-sm text-black">{misTareas.length} pendientes</p>
             </div>
-            {!isFormCompleted ? <Lock className="w-5 h-5 text-slate-300 absolute right-6 top-1/2 -translate-y-1/2" /> : <ChevronRight className="w-6 h-6 text-slate-300 absolute right-6 top-1/2 -translate-y-1/2" />}
+            {!isFormCompleted ? <Lock className="w-5 h-5 text-black absolute right-6 top-1/2 -translate-y-1/2" /> : <ChevronRight className="w-6 h-6 text-black absolute right-6 top-1/2 -translate-y-1/2" />}
           </button>
 
-          {/* Nueva Opción de Accesos Router */}
           <button
             onClick={() => setTechView('manuales')}
-            className="p-6 bg-white rounded-3xl shadow-sm border border-slate-200 flex items-center gap-4 hover:border-blue-400 transition-colors relative overflow-hidden"
+            className="p-6 bg-white rounded-3xl shadow-sm border-2 border-black flex items-center gap-4 hover:bg-slate-50 transition-colors relative overflow-hidden"
           >
-            <div className="w-14 h-14 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center shrink-0"><Wifi className="w-7 h-7" /></div>
+            <div className="w-14 h-14 bg-blue-100 text-black rounded-full flex items-center justify-center shrink-0"><Wifi className="w-7 h-7" /></div>
             <div className="text-left">
-              <h3 className="text-lg font-bold text-slate-800">Accesos Router</h3>
-              <p className="text-sm text-slate-500">Credenciales por defecto</p>
+              <h3 className="text-lg font-bold text-black">Accesos Router</h3>
+              <p className="text-sm text-black">Credenciales por defecto</p>
             </div>
-            <ChevronRight className="w-6 h-6 text-slate-300 absolute right-6 top-1/2 -translate-y-1/2" />
+            <ChevronRight className="w-6 h-6 text-black absolute right-6 top-1/2 -translate-y-1/2" />
           </button>
         </div>
       </div>
@@ -1345,11 +1364,11 @@ function TecnicoDashboard({ tasks, onUpdateTask, onLogout, movilPasswords, movil
               else if (!formVehiculo.kmInicial) alert("Por favor ingresa el kilometraje inicial.");
               else {
                 setIsFormCompleted(true);
-                localStorage.setItem('isFormCompleted', 'true');
-                localStorage.setItem('formVehiculo', JSON.stringify(formVehiculo));
+                try {
+                  localStorage.setItem(`isFormCompleted_${miMovil}`, 'true');
+                  localStorage.setItem(`formVehiculo_${miMovil}`, JSON.stringify(formVehiculo));
+                } catch (e) { }
                 setTechView('menu');
-
-                // Guardar formulario en Firebase
                 onSaveForm('CHECK-IN VEHÍCULO', miMovil, formVehiculo);
               }
             }}
@@ -1645,7 +1664,6 @@ function TecnicoDashboard({ tasks, onUpdateTask, onLogout, movilPasswords, movil
                             setQuickSelectVal(selectedText);
                             if (selectedText) {
                               setResolucionTexto(prev => prev ? prev + (prev.endsWith(' ') ? '' : ' ') + selectedText : selectedText);
-                              // Un pequeño retraso permite que el celular muestre el "check" nativo antes de resetear
                               setTimeout(() => setQuickSelectVal(""), 400);
                             }
                           }}
@@ -1734,15 +1752,20 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [syncStatus, setSyncStatus] = useState('Conectando...');
-  const [appRole, setAppRole] = useState(() => localStorage.getItem('appRole') || null);
+
+  const [appRole, setAppRole] = useState(() => {
+    try { return localStorage.getItem('appRole') || null; } catch (e) { return null; }
+  });
 
   const handleSetRole = (role) => {
     setAppRole(role);
-    if (role) {
-      localStorage.setItem('appRole', role);
-    } else {
-      localStorage.removeItem('appRole');
-    }
+    try {
+      if (role) {
+        localStorage.setItem('appRole', role);
+      } else {
+        localStorage.removeItem('appRole');
+      }
+    } catch (e) { }
   };
 
   const [showAdminLogin, setShowAdminLogin] = useState(false);
@@ -1753,7 +1776,7 @@ export default function App() {
   const [loginError, setLoginError] = useState(false);
   const [settingsLoginError, setSettingsLoginError] = useState(false);
 
-  // Estados para Archivo de Formularios (Nuevo)
+  // Estados para Archivo de Formularios
   const [formulariosGuardados, setFormulariosGuardados] = useState([]);
   const [showArchive, setShowArchive] = useState(false);
   const [selectedFormDetail, setSelectedFormDetail] = useState(null);
@@ -1761,7 +1784,7 @@ export default function App() {
   // Estados de Configuración
   const [validAdminPassword, setValidAdminPassword] = useState('admin123');
   const [validSettingsPassword, setValidSettingsPassword] = useState('config123');
-  const [isTimeTrackingEnabled, setIsTimeTrackingEnabled] = useState(true); // Interruptor de Medición
+  const [isTimeTrackingEnabled, setIsTimeTrackingEnabled] = useState(true);
   const [newAdminPwd, setNewAdminPwd] = useState('');
   const [confirmAdminPwd, setConfirmAdminPwd] = useState('');
   const [pwdUpdateMsg, setPwdUpdateMsg] = useState({ text: '', type: '' });
@@ -1776,6 +1799,10 @@ export default function App() {
   const [newAppTitle, setNewAppTitle] = useState('');
   const [newAdminTitle, setNewAdminTitle] = useState('');
   const [titleUpdateMsg, setTitleUpdateMsg] = useState({ text: '', type: '' });
+
+  // Estado para el logo personalizado
+  const [customLogo, setCustomLogo] = useState(null);
+  const [logoUploadError, setLogoUploadError] = useState('');
 
   const [movilesList, setMovilesList] = useState(['MÓVIL 1', 'MÓVIL 2', 'MÓVIL 3', 'MÓVIL 4']);
   const [movilPasswords, setMovilPasswords] = useState({
@@ -1802,12 +1829,16 @@ export default function App() {
   const [resolucionOpciones, setResolucionOpciones] = useState(defaultResoluciones);
   const [newResolucion, setNewResolucion] = useState('');
   const [resolucionManageError, setResolucionManageError] = useState('');
-  const [editingResolucion, setEditingResolucion] = useState(null); // Nuevo estado para editar
+  const [editingResolucion, setEditingResolucion] = useState(null);
 
   useEffect(() => {
     const initAuth = async () => {
       try {
-        await signInAnonymously(auth);
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+          await signInWithCustomToken(auth, __initial_auth_token);
+        } else {
+          await signInAnonymously(auth);
+        }
       } catch (err) {
         console.error("Auth Error:", err);
         setSyncStatus('Error');
@@ -1824,7 +1855,6 @@ export default function App() {
   useEffect(() => {
     if (!user) return;
 
-    // Cargar configuración de móviles desde Firebase - RUTA CORREGIDA (6 segmentos)
     const configDoc = doc(db, 'artifacts', appId, 'public', 'data', 'config', 'settings');
     const unsubConfig = onSnapshot(configDoc, (docSnap) => {
       if (docSnap.exists()) {
@@ -1836,6 +1866,7 @@ export default function App() {
         if (data.resoluciones) setResolucionOpciones(data.resoluciones);
         if (data.appTitle) setAppTitle(data.appTitle);
         if (data.adminTitle) setAdminTitle(data.adminTitle);
+        if (data.customLogo !== undefined) setCustomLogo(data.customLogo);
       }
     });
 
@@ -1887,7 +1918,6 @@ export default function App() {
 
   const saveConfigToFirebase = async (updates) => {
     try {
-      // RUTA CORREGIDA (6 segmentos)
       await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'config', 'settings'), updates, { merge: true });
     } catch (err) {
       console.error("Error guardando configuración:", err);
@@ -1945,11 +1975,11 @@ export default function App() {
       </div>
 
       <div className="text-center mb-10 w-full max-w-2xl mt-12 sm:mt-0">
-        <div className="w-32 h-32 mx-auto mb-6 rounded-full overflow-hidden shadow-2xl ring-4 ring-fuchsia-500/30 flex items-center justify-center bg-white">
+        <div className="w-40 h-40 mx-auto mb-6 rounded-full overflow-hidden shadow-2xl ring-4 ring-fuchsia-500/30 flex items-center justify-center bg-white p-1">
           <img
-            src="./Logo canal.jpg"
+            src={customLogo || "./logo-tajamar.jpeg"}
             alt="Tajamar TV"
-            className="w-full h-full object-cover scale-105"
+            className="w-full h-full object-contain rounded-full"
             onError={(e) => {
               e.target.onerror = null;
               e.target.src = "https://ui-avatars.com/api/?name=Tajamar&background=d946ef&color=fff&size=128";
@@ -1961,19 +1991,19 @@ export default function App() {
       </div>
 
       <div className="flex flex-col sm:flex-row gap-6 w-full max-w-2xl">
-        <button onClick={() => setShowAdminLogin(true)} className="flex-1 bg-white p-8 rounded-3xl hover:bg-indigo-50 border-4 border-transparent hover:border-indigo-500 transition-all text-center group shadow-xl">
-          <div className="bg-indigo-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform text-indigo-600"><Lock className="w-10 h-10" /></div>
-          <h2 className="text-xl font-bold text-slate-800 mb-2">Coordinador</h2>
-          <p className="text-sm text-slate-500">Gestión total y mapa general.</p>
+        <button onClick={() => setShowAdminLogin(true)} className="flex-1 bg-gradient-to-br from-[#7441de] to-[#ca28cc] p-8 rounded-3xl hover:brightness-110 border-4 border-white transition-all text-center group shadow-xl">
+          <div className="bg-white/20 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform text-white"><Lock className="w-10 h-10" /></div>
+          <h2 className="text-xl font-bold text-white mb-2">Coordinador</h2>
+          <p className="text-sm text-white/80">Gestión total y mapa general.</p>
         </button>
-        <button onClick={() => handleSetRole('TECNICO')} className="flex-1 bg-white p-8 rounded-3xl hover:bg-emerald-50 border-4 border-transparent hover:border-emerald-500 transition-all text-center group shadow-xl">
-          <div className="bg-emerald-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform text-emerald-600"><Smartphone className="w-10 h-10" /></div>
-          <h2 className="text-xl font-bold text-slate-800 mb-2">Técnico Móvil</h2>
-          <p className="text-sm text-slate-500">Hojas de ruta y tareas diarias.</p>
+        <button onClick={() => handleSetRole('TECNICO')} className="flex-1 bg-gradient-to-br from-[#7441de] to-[#ca28cc] p-8 rounded-3xl hover:brightness-110 border-4 border-white transition-all text-center group shadow-xl">
+          <div className="bg-white/20 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform text-white"><Smartphone className="w-10 h-10" /></div>
+          <h2 className="text-xl font-bold text-white mb-2">Técnico Móvil</h2>
+          <p className="text-sm text-white/80">Hojas de ruta y tareas diarias.</p>
         </button>
       </div>
 
-      <div className="mt-6 w-full max-w-2xl">
+      <div className="mt-6 w-full max-w-md">
         <button onClick={() => setShowArchive(true)} className="w-full bg-slate-800 hover:bg-slate-700 p-5 rounded-3xl border border-slate-700 transition-all text-center flex items-center justify-center gap-3 group text-white shadow-lg">
           <Archive className="w-6 h-6 text-slate-400 group-hover:text-white transition-colors" />
           <span className="font-bold">Historial de Formularios Guardados</span>
@@ -2081,10 +2111,10 @@ export default function App() {
 
       {showSettingsAuth && (
         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-8 w-full max-w-sm shadow-2xl relative animate-in zoom-in-95">
-            <button onClick={() => { setShowSettingsAuth(false); setSettingsLoginError(false); setSettingsPassword(''); }} className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 rounded-full transition-colors"><X className="w-5 h-5" /></button>
-            <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-500"><Settings className="w-8 h-8" /></div>
-            <h2 className="text-2xl font-bold text-center text-slate-800 mb-2">Acceso Configuración</h2>
+          <div className="bg-gradient-to-br from-[#7441de]/80 to-[#ca28cc]/80 backdrop-blur-xl border border-white/20 rounded-3xl p-8 w-full max-w-sm shadow-2xl relative animate-in zoom-in-95">
+            <button onClick={() => { setShowSettingsAuth(false); setSettingsLoginError(false); setSettingsPassword(''); }} className="absolute top-4 right-4 p-2 text-white/70 hover:text-white rounded-full transition-colors"><X className="w-5 h-5" /></button>
+            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 text-white"><Settings className="w-8 h-8" /></div>
+            <h2 className="text-2xl font-bold text-center text-white mb-2">Acceso Configuración</h2>
             <form onSubmit={(e) => {
               e.preventDefault();
               if (settingsPassword === validSettingsPassword) {
@@ -2438,9 +2468,48 @@ export default function App() {
                 </div>
               </div>
 
-              {/* PERSONALIZACIÓN DE TÍTULOS (Nuevo Panel) */}
+              {/* PERSONALIZACIÓN DE TÍTULOS E INICIO (Nuevo Panel) */}
               <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex flex-col gap-3">
-                <p className="text-sm font-bold text-slate-700 flex items-center gap-2"><Type className="w-4 h-4" /> Personalización de Títulos</p>
+                <p className="text-sm font-bold text-slate-700 flex items-center gap-2"><Type className="w-4 h-4" /> Personalización de Títulos e Inicio</p>
+
+                <div className="mb-2 pb-3 border-b border-slate-200">
+                  <label className="text-xs font-semibold text-slate-500 mb-1 flex items-center gap-1"><ImageIcon className="w-3.5 h-3.5" /> Logo de Aplicación (Max 200KB)</label>
+                  {logoUploadError && <p className="text-xs text-red-500 font-bold mb-2">{logoUploadError}</p>}
+                  <div className="flex items-center gap-3">
+                    {customLogo && <img src={customLogo} alt="Logo" className="w-10 h-10 rounded-full object-contain bg-white border border-slate-200 shrink-0" />}
+                    <div className="flex-1 flex flex-col gap-1">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files[0];
+                          if (!file) return;
+                          if (file.size > 200 * 1024) {
+                            setLogoUploadError('La imagen supera los 200KB. Intenta con una más pequeña.');
+                            return;
+                          }
+                          setLogoUploadError('');
+                          const reader = new FileReader();
+                          reader.onload = (event) => {
+                            const base64 = event.target.result;
+                            setCustomLogo(base64);
+                            saveConfigToFirebase({ customLogo: base64 });
+                          };
+                          reader.readAsDataURL(file);
+                        }}
+                        className="text-xs w-full file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-indigo-100 file:text-indigo-700 hover:file:bg-indigo-200 cursor-pointer"
+                      />
+                      {customLogo && (
+                        <button
+                          onClick={() => { setCustomLogo(null); saveConfigToFirebase({ customLogo: null }); setLogoUploadError(''); }}
+                          className="text-[10px] text-red-500 font-bold hover:underline self-start mt-1"
+                        >
+                          Restablecer logo por defecto
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
 
                 <div>
                   <label className="text-xs font-semibold text-slate-500 mb-1 block">Título Menú Principal</label>
@@ -2480,10 +2549,10 @@ export default function App() {
 
       {showAdminLogin && (
         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-8 w-full max-w-sm shadow-2xl relative animate-in zoom-in-95">
-            <button onClick={() => { setShowAdminLogin(false); setLoginError(false); setAdminPassword(''); }} className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 rounded-full transition-colors"><X className="w-5 h-5" /></button>
-            <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4 text-indigo-600"><Monitor className="w-8 h-8" /></div>
-            <h2 className="text-2xl font-bold text-center text-slate-800 mb-2">Acceso Coordinador</h2>
+          <div className="bg-gradient-to-br from-[#7441de]/80 to-[#ca28cc]/80 backdrop-blur-xl border border-white/20 rounded-3xl p-8 w-full max-w-sm shadow-2xl relative animate-in zoom-in-95">
+            <button onClick={() => { setShowAdminLogin(false); setLoginError(false); setAdminPassword(''); }} className="absolute top-4 right-4 p-2 text-white/70 hover:text-white rounded-full transition-colors"><X className="w-5 h-5" /></button>
+            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 text-white"><Monitor className="w-8 h-8" /></div>
+            <h2 className="text-2xl font-bold text-center text-white mb-2">Acceso Coordinador</h2>
             <form onSubmit={(e) => {
               e.preventDefault();
               if (adminPassword === validAdminPassword) { handleSetRole('ADMIN'); setShowAdminLogin(false); setLoginError(false); setAdminPassword(''); }
