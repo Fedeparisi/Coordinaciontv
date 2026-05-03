@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+﻿import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   MapPin, Calendar, AlertCircle, Truck, Filter, Map as MapIcon,
   Clock, User, Hash, CheckCircle, Download, Cloud, CloudOff,
@@ -46,7 +46,7 @@ const getMovilColor = (movil) => {
 };
 
 // Generador de HTML para el Mapa Real con Leaflet
-const generateMapHTML = (tasks, drawRoute = false, movilesList = ['MÓVIL 1', 'MÓVIL 2', 'MÓVIL 3', 'MÓVIL 4']) => {
+const generateMapHTML = (tasks, drawRoute = false, movilesList = ['MÓVIL 1', 'MÓVIL 2', 'MÓVIL 3', 'MÓVIL 4'], isTechnician = false) => {
   const allMoviles = ['SIN ASIGNAR', ...movilesList];
 
   const markers = tasks.map(t => {
@@ -81,13 +81,17 @@ const generateMapHTML = (tasks, drawRoute = false, movilesList = ['MÓVIL 1', 'M
         <span style="color: #4f46e5; font-weight: bold;">${t.tipo}</span> • <span style="color: #64748b;">${t.movil}</span><br/>
         <span style="color: #64748b; font-size: 12px; display: inline-block; margin-top: 4px;">${direccion}</span>
         <div style="margin-top: 10px; border-top: 1px solid #e2e8f0; padding-top: 10px;">
-          <label style="font-size: 10px; font-weight: bold; color: #64748b; text-transform: uppercase;">Asignar a móvil:</label>
-          <div style="display: flex; gap: 4px; margin-top: 4px;">
-            <select id="sel-${t.id}" style="flex: 1; padding: 4px; font-size: 12px; border: 1px solid #cbd5e1; border-radius: 4px; outline: none;">
-              ${movilesOptions}
-            </select>
-            <button onclick="window.parent.postMessage({ type: 'ASSIGN_TASK', taskId: '${t.id}', movil: document.getElementById('sel-${t.id}').value }, '*')" style="background: #10b981; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold;">OK</button>
-          </div>
+          ${isTechnician ? `
+            <a href="https://www.google.com/maps/dir/?api=1&destination=${t.lat},${t.lng}" target="_blank" style="display: block; width: 100%; background: #4f46e5; color: white; text-decoration: none; text-align: center; padding: 8px; border-radius: 6px; font-size: 12px; font-weight: bold; box-sizing: border-box;">Ir hacia el lugar</a>
+          ` : `
+            <label style="font-size: 10px; font-weight: bold; color: #64748b; text-transform: uppercase;">Asignar a móvil:</label>
+            <div style="display: flex; gap: 4px; margin-top: 4px;">
+              <select id="sel-${t.id}" style="flex: 1; padding: 4px; font-size: 12px; border: 1px solid #cbd5e1; border-radius: 4px; outline: none;">
+                ${movilesOptions}
+              </select>
+              <button onclick="window.parent.postMessage({ type: 'ASSIGN_TASK', taskId: '${t.id}', movil: document.getElementById('sel-${t.id}').value }, '*')" style="background: #10b981; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold;">OK</button>
+            </div>
+          `}
         </div>
       </div>
     `;
@@ -692,7 +696,7 @@ function AdminDashboard({ tasks, onUpdateTask, syncStatus, onLogout, isTimeTrack
               </div>
             </div>
             <div className="w-full h-[400px] sm:h-[500px] bg-slate-100 rounded-xl overflow-hidden shadow-inner border border-slate-300 relative z-0">
-              <iframe title="Mapa General" srcDoc={generateMapHTML(pendingTasksForMap, sortOrder === 'geo', movilesList)} className="w-full h-full border-none"></iframe>
+              <iframe title="Mapa General" srcDoc={generateMapHTML(pendingTasksForMap, sortOrder === 'geo', movilesList, false)} className="w-full h-full border-none"></iframe>
               {pendingTasksForMap.length === 0 && (
                 <div className="absolute inset-0 flex items-center justify-center bg-slate-100/80 backdrop-blur-sm z-10">
                   <p className="text-slate-500 font-medium bg-white px-4 py-2 rounded-lg shadow-sm border border-slate-200">No hay tareas en este filtro para mostrar.</p>
@@ -1145,8 +1149,8 @@ function TecnicoDashboard({ tasks, onUpdateTask, onLogout, movilPasswords, movil
                 if (movilPasswordInput === validPassword) {
                   const nextMovil = selectedMovilAuth;
                   setMiMovil(nextMovil);
-                  try { 
-                    localStorage.setItem('miMovil', nextMovil); 
+                  try {
+                    localStorage.setItem('miMovil', nextMovil);
                     const savedForm = localStorage.getItem(`formVehiculo_${nextMovil}`);
                     setFormVehiculo(savedForm ? JSON.parse(savedForm) : { tecnico1: '', tecnico2: '', kmInicial: '', combustible: 'Medio (1/2)', observaciones: '' });
                     setIsFormCompleted(localStorage.getItem(`isFormCompleted_${nextMovil}`) === 'true');
@@ -1525,7 +1529,7 @@ function TecnicoDashboard({ tasks, onUpdateTask, onLogout, movilPasswords, movil
               </div>
             </div>
             <div className="w-full h-64 bg-slate-100 rounded-2xl overflow-hidden shadow-inner border border-slate-200 relative z-0">
-              <iframe title="Mapa Ruta Técnico" srcDoc={generateMapHTML(misTareas, sortOrder === 'geo', movilesList)} className="w-full h-full border-none"></iframe>
+              <iframe title="Mapa Ruta Técnico" srcDoc={generateMapHTML(misTareas, sortOrder === 'geo', movilesList, true)} className="w-full h-full border-none"></iframe>
             </div>
           </div>
         )}
@@ -1578,13 +1582,28 @@ function TecnicoDashboard({ tasks, onUpdateTask, onLogout, movilPasswords, movil
                   )}
                 </div>
 
-                {task.servicios && (
+                {(task.servicios || task.observacion) && (
                   <div className="mb-2">
                     <button onClick={() => toggleServicios(task.id)} className={`w-full flex items-center justify-between p-3 rounded-xl transition-colors border ${expandedServicios[task.id] ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 hover:bg-emerald-50/50 text-slate-600 border-slate-200'}`}>
-                      <div className="flex items-center gap-2"><Package className="w-4 h-4" /><span className="text-sm font-semibold">Servicios</span></div>
+                      <div className="flex items-center gap-2"><Package className="w-4 h-4" /><span className="text-sm font-semibold">Servicios y Observaciones</span></div>
                       {expandedServicios[task.id] ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                     </button>
-                    {expandedServicios[task.id] && <div className="p-4 mt-2 bg-emerald-50/50 border border-emerald-100 rounded-xl shadow-inner text-sm font-medium text-emerald-900">{task.servicios}</div>}
+                    {expandedServicios[task.id] && (
+                      <div className="p-4 mt-2 bg-emerald-50/50 border border-emerald-100 rounded-xl shadow-inner text-sm font-medium text-emerald-900 flex flex-col gap-3">
+                        {task.servicios && (
+                          <div>
+                            <span className="block text-[10px] font-bold uppercase text-emerald-600 mb-1">Servicios</span>
+                            {task.servicios}
+                          </div>
+                        )}
+                        {task.observacion && (
+                          <div>
+                            <span className="block text-[10px] font-bold uppercase text-emerald-600 mb-1">Observaciones</span>
+                            {task.observacion}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -2111,8 +2130,8 @@ export default function App() {
 
       {showSettingsAuth && (
         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center p-4">
-          <div className="bg-gradient-to-br from-[#7441de]/80 to-[#ca28cc]/80 backdrop-blur-xl border border-white/20 rounded-3xl p-8 w-full max-w-sm shadow-2xl relative animate-in zoom-in-95">
-            <button onClick={() => { setShowSettingsAuth(false); setSettingsLoginError(false); setSettingsPassword(''); }} className="absolute top-4 right-4 p-2 text-white/70 hover:text-white rounded-full transition-colors"><X className="w-5 h-5" /></button>
+          <div className="bg-gradient-to-br from-[#7441de]/80 to-[#ca28cc]/80 backdrop-blur-xl border-2 border-black rounded-3xl p-8 w-full max-w-sm shadow-2xl relative animate-in zoom-in-95">
+            <button onClick={() => { setShowSettingsAuth(false); setSettingsLoginError(false); setSettingsPassword(''); }} className="absolute top-4 right-4 p-2 text-white/70 hover:text-white rounded-full transition-colors border-2 border-black"><X className="w-5 h-5" /></button>
             <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 text-white"><Settings className="w-8 h-8" /></div>
             <h2 className="text-2xl font-bold text-center text-white mb-2">Acceso Configuración</h2>
             <form onSubmit={(e) => {
@@ -2128,7 +2147,7 @@ export default function App() {
                 <input type="password" placeholder="Contraseña" value={settingsPassword} onChange={(e) => { setSettingsPassword(e.target.value); setSettingsLoginError(false); }} className={`w-full p-4 border rounded-2xl outline-none focus:ring-2 transition-all text-center tracking-widest ${settingsLoginError ? 'border-red-400 focus:ring-red-200' : 'border-slate-300 focus:ring-slate-200'}`} autoFocus />
                 {settingsLoginError && <p className="text-red-500 text-xs font-bold mt-2 ml-1 text-center animate-pulse">Clave incorrecta.</p>}
               </div>
-              <button type="submit" className="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-4 rounded-2xl shadow-md">Ingresar</button>
+              <button type="submit" className="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-4 rounded-2xl shadow-md border-2 border-black">Ingresar</button>
             </form>
           </div>
         </div>
@@ -2136,7 +2155,7 @@ export default function App() {
 
       {showSettingsModal && (
         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-5 sm:p-6 w-full max-w-xl shadow-2xl animate-in zoom-in-95 max-h-[90vh] flex flex-col">
+          <div className="bg-white rounded-3xl p-5 sm:p-6 w-full max-w-xl shadow-2xl animate-in zoom-in-95 max-h-[90vh] flex flex-col border-2 border-black">
             <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100 shrink-0">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-500">
@@ -2144,12 +2163,12 @@ export default function App() {
                 </div>
                 <h2 className="text-xl font-bold text-slate-800">Configuración</h2>
               </div>
-              <button onClick={() => { setShowSettingsModal(false); setEditingMovil(null); setDeleteConfirmMovil(null); setMovilManageError(''); setResolucionManageError(''); setEditingResolucion(null); setTitleUpdateMsg({ text: '', type: '' }); }} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
+              <button onClick={() => { setShowSettingsModal(false); setEditingMovil(null); setDeleteConfirmMovil(null); setMovilManageError(''); setResolucionManageError(''); setEditingResolucion(null); setTitleUpdateMsg({ text: '', type: '' }); }} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors border-2 border-black">
                 <X className="w-6 h-6" />
               </button>
             </div>
             <div className="space-y-4 overflow-y-auto pr-2 pb-2 custom-scrollbar flex-1">
-              <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex justify-between items-center">
+              <div className="p-4 bg-slate-50 rounded-xl border-2 border-black flex justify-between items-center">
                 <div>
                   <p className="text-sm font-bold text-slate-700">Estado de Red</p>
                   <p className="text-xs text-slate-500">{syncStatus}</p>
@@ -2157,27 +2176,14 @@ export default function App() {
                 {syncStatus === 'En línea' ? <Cloud className="w-5 h-5 text-emerald-500" /> : <CloudOff className="w-5 h-5 text-slate-400" />}
               </div>
 
-              {/* Interruptor de Medición de Tiempos */}
-              <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex justify-between items-center">
-                <div>
-                  <p className="text-sm font-bold text-slate-700">Medición de Tiempos</p>
-                  <p className="text-xs text-slate-500">Activado para Reporte PDF</p>
-                </div>
-                <button
-                  onClick={() => setIsTimeTrackingEnabled(!isTimeTrackingEnabled)}
-                  className={`w-12 h-6 rounded-full transition-colors relative flex items-center ${isTimeTrackingEnabled ? 'bg-indigo-600' : 'bg-slate-300'}`}
-                >
-                  <div className={`w-4 h-4 bg-white rounded-full transition-all shadow-sm absolute ${isTimeTrackingEnabled ? 'right-1' : 'left-1'}`}></div>
-                </button>
-              </div>
 
               {/* GESTIÓN DE MÓVILES (Nuevo Panel) */}
-              <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex flex-col gap-3">
+              <div className="p-4 bg-slate-50 rounded-xl border-2 border-black flex flex-col gap-3">
                 <p className="text-sm font-bold text-slate-700 flex items-center gap-2"><Truck className="w-4 h-4" /> Gestión de Flota (Móviles)</p>
 
                 <div className="flex flex-col gap-2">
                   {movilesList.map(m => (
-                    <div key={m} className="flex gap-2 items-center bg-white p-2 rounded-lg border border-slate-200 shadow-sm">
+                    <div key={m} className="flex gap-2 items-center bg-white p-2 rounded-lg border-2 border-black shadow-sm">
                       {editingMovil?.old === m ? (
                         <input
                           type="text"
@@ -2234,13 +2240,13 @@ export default function App() {
                             tasks.forEach(t => {
                               if (t.movil === m) handleUpdateTask(t.id, 'movil', newName);
                             });
-                          }} className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded transition-colors"><CheckCircle className="w-4 h-4" /></button>
-                          <button onClick={() => { setEditingMovil(null); setMovilManageError(''); }} className="p-1.5 text-slate-400 hover:bg-slate-100 rounded transition-colors"><X className="w-4 h-4" /></button>
+                          }} className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded transition-colors border-2 border-black"><CheckCircle className="w-4 h-4" /></button>
+                          <button onClick={() => { setEditingMovil(null); setMovilManageError(''); }} className="p-1.5 text-slate-400 hover:bg-slate-100 rounded transition-colors border-2 border-black"><X className="w-4 h-4" /></button>
                         </>
                       ) : (
                         <>
-                          <button onClick={() => { setEditingMovil({ old: m, new: m }); setMovilManageError(''); setDeleteConfirmMovil(null); }} className="text-xs text-indigo-600 font-bold px-2 py-1.5 hover:bg-indigo-50 rounded transition-colors">Renombrar</button>
-                          <button onClick={() => { setDeleteConfirmMovil(m); setEditingMovil(null); setMovilManageError(''); }} className="p-1.5 text-red-500 hover:bg-red-50 rounded transition-colors"><Trash2 className="w-4 h-4" /></button>
+                          <button onClick={() => { setEditingMovil({ old: m, new: m }); setMovilManageError(''); setDeleteConfirmMovil(null); }} className="text-xs text-indigo-600 font-bold px-2 py-1.5 hover:bg-indigo-50 rounded transition-colors border-2 border-black">Renombrar</button>
+                          <button onClick={() => { setDeleteConfirmMovil(m); setEditingMovil(null); setMovilManageError(''); }} className="p-1.5 text-red-500 hover:bg-red-50 rounded transition-colors border-2 border-black"><Trash2 className="w-4 h-4" /></button>
                         </>
                       )}
                     </div>
@@ -2252,7 +2258,7 @@ export default function App() {
                     ¿Eliminar <strong>{deleteConfirmMovil}</strong>?<br />
                     <span className="text-xs text-red-600 font-medium">Las tareas asignadas pasarán a "SIN ASIGNAR".</span>
                     <div className="flex justify-center gap-2 mt-2">
-                      <button onClick={() => setDeleteConfirmMovil(null)} className="px-3 py-1.5 bg-slate-200 text-slate-700 rounded-md font-bold text-xs hover:bg-slate-300 transition-colors">Cancelar</button>
+                      <button onClick={() => setDeleteConfirmMovil(null)} className="px-3 py-1.5 bg-slate-200 text-slate-700 rounded-md font-bold text-xs hover:bg-slate-300 transition-colors border-2 border-black">Cancelar</button>
                       <button onClick={() => {
                         const updatedMoviles = movilesList.filter(mov => mov !== deleteConfirmMovil);
                         const updatedPasswords = { ...movilPasswords };
@@ -2266,7 +2272,7 @@ export default function App() {
                         tasks.forEach(t => {
                           if (t.movil === deleteConfirmMovil) handleUpdateTask(t.id, 'movil', 'SIN ASIGNAR');
                         });
-                      }} className="px-3 py-1.5 bg-red-600 text-white rounded-md font-bold text-xs hover:bg-red-700 transition-colors shadow-sm">Sí, Eliminar</button>
+                      }} className="px-3 py-1.5 bg-red-600 text-white rounded-md font-bold text-xs hover:bg-red-700 transition-colors shadow-sm border-2 border-black">Sí, Eliminar</button>
                     </div>
                   </div>
                 )}
@@ -2306,14 +2312,14 @@ export default function App() {
                       setNewMovilName('');
                       saveConfigToFirebase({ moviles: updatedMoviles, passwords: updatedPasswords });
                     }}
-                    className="bg-slate-800 hover:bg-slate-900 text-white font-bold px-4 py-2 rounded-lg text-sm transition-colors shadow-sm"
+                    className="bg-slate-800 hover:bg-slate-900 text-white font-bold px-4 py-2 rounded-lg text-sm transition-colors shadow-sm border-2 border-black"
                   >
                     Agregar
                   </button>
                 </div>
               </div>
 
-              <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex flex-col gap-3">
+              <div className="p-4 bg-slate-50 rounded-xl border-2 border-black flex flex-col gap-3">
                 <p className="text-sm font-bold text-slate-700 flex items-center gap-2"><Lock className="w-4 h-4" /> Clave Coordinador</p>
                 <input type="password" placeholder="Nueva clave" value={newAdminPwd} onChange={(e) => { setNewAdminPwd(e.target.value); setPwdUpdateMsg({ text: '', type: '' }); }} className="w-full p-2.5 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-slate-400" />
                 <input type="password" placeholder="Confirmar" value={confirmAdminPwd} onChange={(e) => { setConfirmAdminPwd(e.target.value); setPwdUpdateMsg({ text: '', type: '' }); }} className="w-full p-2.5 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-slate-400" />
@@ -2327,11 +2333,11 @@ export default function App() {
                     setConfirmAdminPwd('');
                     saveConfigToFirebase({ adminPwd: newAdminPwd });
                   }
-                }} className="w-full bg-slate-200 text-slate-800 font-bold py-2 rounded-lg text-sm hover:bg-slate-300 transition-colors">Actualizar</button>
+                }} className="w-full bg-slate-200 text-slate-800 font-bold py-2 rounded-lg text-sm hover:bg-slate-300 transition-colors border-2 border-black">Actualizar</button>
                 {pwdUpdateMsg.text && <p className={`text-xs text-center font-bold ${pwdUpdateMsg.type === 'error' ? 'text-red-500' : 'text-emerald-600'}`}>{pwdUpdateMsg.text}</p>}
               </div>
 
-              <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex flex-col gap-3">
+              <div className="p-4 bg-slate-50 rounded-xl border-2 border-black flex flex-col gap-3">
                 <p className="text-sm font-bold text-slate-700 flex items-center gap-2"><Lock className="w-4 h-4" /> Clave Configuración</p>
                 <input type="password" placeholder="Nueva clave" value={newSettingsPwd} onChange={(e) => { setNewSettingsPwd(e.target.value); setSettingsPwdUpdateMsg({ text: '', type: '' }); }} className="w-full p-2.5 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-slate-400" />
                 <input type="password" placeholder="Confirmar" value={confirmSettingsPwd} onChange={(e) => { setConfirmSettingsPwd(e.target.value); setSettingsPwdUpdateMsg({ text: '', type: '' }); }} className="w-full p-2.5 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-slate-400" />
@@ -2345,11 +2351,11 @@ export default function App() {
                     setConfirmSettingsPwd('');
                     saveConfigToFirebase({ settingsPwd: newSettingsPwd });
                   }
-                }} className="w-full bg-slate-200 text-slate-800 font-bold py-2 rounded-lg text-sm hover:bg-slate-300 transition-colors">Actualizar</button>
+                }} className="w-full bg-slate-200 text-slate-800 font-bold py-2 rounded-lg text-sm hover:bg-slate-300 transition-colors border-2 border-black">Actualizar</button>
                 {settingsPwdUpdateMsg.text && <p className={`text-xs text-center font-bold ${settingsPwdUpdateMsg.type === 'error' ? 'text-red-500' : 'text-emerald-600'}`}>{settingsPwdUpdateMsg.text}</p>}
               </div>
 
-              <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex flex-col gap-3">
+              <div className="p-4 bg-slate-50 rounded-xl border-2 border-black flex flex-col gap-3">
                 <p className="text-sm font-bold text-slate-700 flex items-center gap-2"><Smartphone className="w-4 h-4" /> Clave de Móviles</p>
                 <select value={selectedMovilEdit || (movilesList[0] || '')} onChange={(e) => setSelectedMovilEdit(e.target.value)} className="w-full p-2.5 border rounded-lg text-sm outline-none font-bold text-slate-700">
                   {movilesList.map(m => <option key={m} value={m}>{m}</option>)}
@@ -2368,16 +2374,16 @@ export default function App() {
                     setConfirmMovilPwd('');
                     saveConfigToFirebase({ passwords: updatedPasswords });
                   }
-                }} className="w-full bg-slate-200 text-slate-800 font-bold py-2 rounded-lg text-sm hover:bg-slate-300 transition-colors">Actualizar</button>
+                }} className="w-full bg-slate-200 text-slate-800 font-bold py-2 rounded-lg text-sm hover:bg-slate-300 transition-colors border-2 border-black">Actualizar</button>
                 {movilPwdUpdateMsg.text && <p className={`text-xs text-center font-bold ${movilPwdUpdateMsg.type === 'error' ? 'text-red-500' : 'text-emerald-600'}`}>{movilPwdUpdateMsg.text}</p>}
               </div>
 
               {/* GESTIÓN DE RESOLUCIONES RÁPIDAS (Nuevo Panel) */}
-              <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex flex-col gap-3">
+              <div className="p-4 bg-slate-50 rounded-xl border-2 border-black flex flex-col gap-3">
                 <p className="text-sm font-bold text-slate-700 flex items-center gap-2"><List className="w-4 h-4" /> Opciones de Resolución</p>
                 <div className="flex flex-col gap-2 max-h-48 overflow-y-auto custom-scrollbar pr-1">
                   {resolucionOpciones.map(res => (
-                    <div key={res} className="flex justify-between items-center bg-white p-2 rounded-lg border border-slate-200 shadow-sm gap-2">
+                    <div key={res} className="flex justify-between items-center bg-white p-2 rounded-lg border-2 border-black shadow-sm gap-2">
                       {editingResolucion?.old === res ? (
                         <input
                           type="text"
@@ -2415,17 +2421,17 @@ export default function App() {
                             setEditingResolucion(null);
                             setResolucionManageError('');
                             saveConfigToFirebase({ resoluciones: updatedRes });
-                          }} className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded transition-colors"><CheckCircle className="w-4 h-4" /></button>
-                          <button onClick={() => { setEditingResolucion(null); setResolucionManageError(''); }} className="p-1.5 text-slate-400 hover:bg-slate-100 rounded transition-colors"><X className="w-4 h-4" /></button>
+                          }} className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded transition-colors border-2 border-black"><CheckCircle className="w-4 h-4" /></button>
+                          <button onClick={() => { setEditingResolucion(null); setResolucionManageError(''); }} className="p-1.5 text-slate-400 hover:bg-slate-100 rounded transition-colors border-2 border-black"><X className="w-4 h-4" /></button>
                         </div>
                       ) : (
                         <div className="flex gap-1 shrink-0">
-                          <button onClick={() => { setEditingResolucion({ old: res, new: res }); setResolucionManageError(''); }} className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded transition-colors"><Pencil className="w-4 h-4" /></button>
+                          <button onClick={() => { setEditingResolucion({ old: res, new: res }); setResolucionManageError(''); }} className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded transition-colors border-2 border-black"><Pencil className="w-4 h-4" /></button>
                           <button onClick={() => {
                             const updatedRes = resolucionOpciones.filter(r => r !== res);
                             setResolucionOpciones(updatedRes);
                             saveConfigToFirebase({ resoluciones: updatedRes });
-                          }} className="p-1.5 text-red-500 hover:bg-red-50 rounded transition-colors"><Trash2 className="w-4 h-4" /></button>
+                          }} className="p-1.5 text-red-500 hover:bg-red-50 rounded transition-colors border-2 border-black"><Trash2 className="w-4 h-4" /></button>
                         </div>
                       )}
                     </div>
@@ -2461,7 +2467,7 @@ export default function App() {
                       setNewResolucion('');
                       saveConfigToFirebase({ resoluciones: updatedRes });
                     }}
-                    className="bg-slate-800 hover:bg-slate-900 text-white font-bold px-3 py-2 rounded-lg text-sm transition-colors shadow-sm"
+                    className="bg-slate-800 hover:bg-slate-900 text-white font-bold px-3 py-2 rounded-lg text-sm transition-colors shadow-sm border-2 border-black"
                   >
                     Agregar
                   </button>
@@ -2469,7 +2475,7 @@ export default function App() {
               </div>
 
               {/* PERSONALIZACIÓN DE TÍTULOS E INICIO (Nuevo Panel) */}
-              <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex flex-col gap-3">
+              <div className="p-4 bg-slate-50 rounded-xl border-2 border-black flex flex-col gap-3">
                 <p className="text-sm font-bold text-slate-700 flex items-center gap-2"><Type className="w-4 h-4" /> Personalización de Títulos e Inicio</p>
 
                 <div className="mb-2 pb-3 border-b border-slate-200">
@@ -2502,7 +2508,7 @@ export default function App() {
                       {customLogo && (
                         <button
                           onClick={() => { setCustomLogo(null); saveConfigToFirebase({ customLogo: null }); setLogoUploadError(''); }}
-                          className="text-[10px] text-red-500 font-bold hover:underline self-start mt-1"
+                          className="text-[10px] text-red-500 font-bold hover:underline self-start mt-1 p-1 rounded border-2 border-black"
                         >
                           Restablecer logo por defecto
                         </button>
@@ -2521,7 +2527,7 @@ export default function App() {
                       saveConfigToFirebase({ appTitle: newAppTitle });
                       setTitleUpdateMsg({ text: 'Título principal actualizado', type: 'success' });
                       setNewAppTitle('');
-                    }} className="bg-slate-800 hover:bg-slate-900 text-white font-bold px-3 py-2 rounded-lg text-sm transition-colors shadow-sm">Guardar</button>
+                    }} className="bg-slate-800 hover:bg-slate-900 text-white font-bold px-3 py-2 rounded-lg text-sm transition-colors shadow-sm border-2 border-black">Guardar</button>
                   </div>
                 </div>
 
@@ -2535,14 +2541,14 @@ export default function App() {
                       saveConfigToFirebase({ adminTitle: newAdminTitle });
                       setTitleUpdateMsg({ text: 'Título de coordinador actualizado', type: 'success' });
                       setNewAdminTitle('');
-                    }} className="bg-slate-800 hover:bg-slate-900 text-white font-bold px-3 py-2 rounded-lg text-sm transition-colors shadow-sm">Guardar</button>
+                    }} className="bg-slate-800 hover:bg-slate-900 text-white font-bold px-3 py-2 rounded-lg text-sm transition-colors shadow-sm border-2 border-black">Guardar</button>
                   </div>
                 </div>
                 {titleUpdateMsg.text && <p className={`text-xs text-center font-bold ${titleUpdateMsg.type === 'error' ? 'text-red-500' : 'text-emerald-600'}`}>{titleUpdateMsg.text}</p>}
               </div>
 
             </div>
-            <button onClick={() => { setShowSettingsModal(false); setEditingMovil(null); setDeleteConfirmMovil(null); setMovilManageError(''); setResolucionManageError(''); setEditingResolucion(null); setTitleUpdateMsg({ text: '', type: '' }); }} className="w-full mt-4 bg-slate-800 text-white font-bold py-3.5 rounded-2xl shrink-0 hover:bg-slate-900 transition-colors shadow-md">Cerrar</button>
+            <button onClick={() => { setShowSettingsModal(false); setEditingMovil(null); setDeleteConfirmMovil(null); setMovilManageError(''); setResolucionManageError(''); setEditingResolucion(null); setTitleUpdateMsg({ text: '', type: '' }); }} className="w-full mt-4 bg-slate-800 text-white font-bold py-3.5 rounded-2xl shrink-0 hover:bg-slate-900 transition-colors shadow-md border-2 border-black">Cerrar</button>
           </div>
         </div>
       )}
