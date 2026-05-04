@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   MapPin, Calendar, AlertCircle, Truck, Filter, Map as MapIcon,
   Clock, User, Hash, CheckCircle, Download, Cloud, CloudOff,
@@ -743,6 +743,24 @@ function AdminDashboard({ tasks, onUpdateTask, syncStatus, onLogout, isTimeTrack
       <main className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 flex flex-col lg:flex-row gap-6">
         <div className="w-full lg:w-2/3 flex flex-col gap-4">
 
+          <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col sm:flex-row gap-4 items-center justify-between">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <Filter className="w-5 h-5 text-slate-500" />
+              <select className="bg-slate-50 border border-slate-300 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5" value={filterMovil} onChange={(e) => setFilterMovil(e.target.value)}>
+                <option value="TODOS">Todos los móviles</option>
+                {allMoviles.map(m => <option key={m} value={m}>{m}</option>)}
+              </select>
+            </div>
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <Clock className="w-5 h-5 text-slate-500" />
+              <select className="bg-slate-50 border border-slate-300 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5" value={sortOrder} onChange={(e) => setSortOrder(e.target.value)}>
+                <option value="asc">Más antiguos primero</option>
+                <option value="desc">Más recientes primero</option>
+                <option value="geo">Sugerencia de recorrido</option>
+              </select>
+            </div>
+          </div>
+
           {/* MAPA GLOBAL DE TAREAS (MOVIDO DEBAJO DE LAS SOLAPAS) */}
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
@@ -769,24 +787,6 @@ function AdminDashboard({ tasks, onUpdateTask, syncStatus, onLogout, isTimeTrack
                   <p className="text-slate-500 font-medium bg-white px-4 py-2 rounded-lg shadow-sm border border-slate-200">No hay tareas en este filtro para mostrar.</p>
                 </div>
               )}
-            </div>
-          </div>
-
-          <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col sm:flex-row gap-4 items-center justify-between">
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <Filter className="w-5 h-5 text-slate-500" />
-              <select className="bg-slate-50 border border-slate-300 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5" value={filterMovil} onChange={(e) => setFilterMovil(e.target.value)}>
-                <option value="TODOS">Todos los móviles</option>
-                {allMoviles.map(m => <option key={m} value={m}>{m}</option>)}
-              </select>
-            </div>
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <Clock className="w-5 h-5 text-slate-500" />
-              <select className="bg-slate-50 border border-slate-300 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5" value={sortOrder} onChange={(e) => setSortOrder(e.target.value)}>
-                <option value="asc">Más antiguos primero</option>
-                <option value="desc">Más recientes primero</option>
-                <option value="geo">Sugerencia de recorrido</option>
-              </select>
             </div>
           </div>
 
