@@ -10,6 +10,7 @@ import {
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore, collection, doc, onSnapshot, setDoc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { jsPDF } from 'jspdf';
 
 // --- 1. CONFIGURACIÓN FIREBASE ---
 
@@ -541,6 +542,72 @@ function AdminDashboard({ tasks, onUpdateTask, syncStatus, onLogout, isTimeTrack
     return filteredAndSortedTasks.filter(t => t.estado !== 'FINALIZADA');
   }, [filteredAndSortedTasks, filterTipo]);
 
+  const handleGenerateAdminPDF = () => {
+    try {
+      const docPdf = new jsPDF();
+
+      docPdf.setFillColor(79, 70, 229);
+      docPdf.rect(0, 0, 210, 30, 'F');
+      docPdf.setTextColor(255, 255, 255);
+      docPdf.setFontSize(16);
+      docPdf.text('INFORME DE TAREAS FINALIZADAS', 15, 20);
+
+      docPdf.setTextColor(40, 40, 40);
+      docPdf.setFontSize(10);
+      docPdf.text(`Generado el: ${new Date().toLocaleDateString('es-AR')} a las ${new Date().toLocaleTimeString('es-AR')}`, 15, 38);
+
+      const porMovil = {};
+      filteredAndSortedTasks.forEach(t => {
+        if (!porMovil[t.movil]) porMovil[t.movil] = [];
+        porMovil[t.movil].push(t);
+      });
+
+      let y = 50;
+
+      Object.keys(porMovil).sort().forEach(movil => {
+        if (y > 270) {
+          docPdf.addPage();
+          y = 20;
+        }
+
+        docPdf.setFillColor(240, 240, 240);
+        docPdf.rect(15, y - 5, 180, 8, 'F');
+        docPdf.setFontSize(12);
+        docPdf.setTextColor(30, 30, 30);
+        docPdf.setFont("helvetica", "bold");
+        docPdf.text(`Móvil: ${movil} (${porMovil[movil].length} tareas)`, 17, y);
+        y += 8;
+
+        docPdf.setFontSize(10);
+        docPdf.setFont("helvetica", "normal");
+
+        porMovil[movil].forEach(t => {
+          if (y > 280) {
+            docPdf.addPage();
+            y = 20;
+          }
+          const text = `- [${t.tipo}] Cliente: ${t.cliente} | Nro: ${t.nroCliente}`;
+          docPdf.text(text, 20, y);
+          y += 5;
+          if (t.resolucionTecnico) {
+            docPdf.setTextColor(100, 100, 100);
+            docPdf.setFontSize(9);
+            const resLines = docPdf.splitTextToSize(`Res: ${t.resolucionTecnico.replace(/\n/g, ' ')}`, 170);
+            docPdf.text(resLines, 25, y);
+            y += (resLines.length * 4) + 2;
+            docPdf.setTextColor(30, 30, 30);
+            docPdf.setFontSize(10);
+          }
+        });
+        y += 5;
+      });
+
+      docPdf.save(`Informe-Finalizadas-${Date.now()}.pdf`);
+    } catch (err) {
+      console.error('Error generando PDF:', err);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-900 w-full animate-in fade-in relative">
 
@@ -803,6 +870,21 @@ function AdminDashboard({ tasks, onUpdateTask, syncStatus, onLogout, isTimeTrack
                 </React.Fragment>
               ))
             )}
+
+            {filterTipo === 'FINALIZADAS' && filteredAndSortedTasks.length > 0 && (
+              <div className="mt-8 p-4 bg-indigo-50 border border-indigo-100 rounded-2xl flex flex-col sm:flex-row justify-between items-center shadow-sm gap-4">
+                <div className="text-center sm:text-left">
+                  <h4 className="font-bold text-indigo-900">Descargar Informe</h4>
+                  <p className="text-sm text-indigo-700">Genera un PDF con las {filteredAndSortedTasks.length} tareas finalizadas ordenadas por móvil.</p>
+                </div>
+                <button
+                  onClick={handleGenerateAdminPDF}
+                  className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-xl transition-colors shadow-md flex items-center justify-center gap-2 shrink-0"
+                >
+                  <Download className="w-5 h-5" /> Informe de finalizadas
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -873,6 +955,7 @@ function TecnicoDashboard({ tasks, onUpdateTask, onLogout, movilPasswords, movil
   const [expandedProblema, setExpandedProblema] = useState({});
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [sortOrder, setSortOrder] = useState('prioridad');
+  const [showCompletedList, setShowCompletedList] = useState(false);
 
   const [showKmFinalModal, setShowKmFinalModal] = useState(false);
   const [kmFinal, setKmFinal] = useState('');
@@ -1244,7 +1327,7 @@ function TecnicoDashboard({ tasks, onUpdateTask, onLogout, movilPasswords, movil
   // --- VISTA: FORMULARIO MÓVIL ---
   if (techView === 'form') {
     return (
-      <div className="min-h-screen bg-slate-100 flex flex-col p-4 w-full max-w-md mx-auto animate-in slide-in-from-right">
+      <div className="min-h-screen bg-gradient-to-br from-[#7441de]/80 to-[#ca28cc]/80 flex flex-col p-4 w-full max-w-md mx-auto animate-in slide-in-from-right">
         <header className="flex items-center gap-4 bg-white p-4 rounded-3xl shadow-sm border border-slate-200 mb-6">
           <button onClick={() => setTechView('menu')} className="p-2 bg-slate-100 text-slate-600 rounded-full hover:bg-slate-200 transition-colors"><ArrowLeft className="w-5 h-5" /></button>
           <div>
@@ -1372,6 +1455,44 @@ function TecnicoDashboard({ tasks, onUpdateTask, onLogout, movilPasswords, movil
                   localStorage.setItem(`isFormCompleted_${miMovil}`, 'true');
                   localStorage.setItem(`formVehiculo_${miMovil}`, JSON.stringify(formVehiculo));
                 } catch (e) { }
+
+                // Generar PDF
+                try {
+                  const docPdf = new jsPDF();
+
+                  docPdf.setFillColor(79, 70, 229); // indigo-600
+                  docPdf.rect(0, 0, 210, 30, 'F');
+                  docPdf.setTextColor(255, 255, 255);
+                  docPdf.setFontSize(16);
+                  docPdf.text('REPORTE DE CHECK-IN', 15, 20);
+
+                  docPdf.setTextColor(40, 40, 40);
+                  docPdf.setFontSize(12);
+
+                  const today = new Date().toLocaleDateString('es-AR');
+                  const time = new Date().toLocaleTimeString('es-AR');
+
+                  docPdf.text(`Fecha y Hora: ${today} ${time}`, 15, 45);
+                  docPdf.text(`Vehículo: ${miMovil}`, 15, 55);
+                  docPdf.text(`Técnico 1: ${formVehiculo.tecnico1}`, 15, 65);
+                  docPdf.text(`Técnico 2: ${formVehiculo.tecnico2}`, 15, 75);
+                  docPdf.text(`Kilometraje Inicial: ${formVehiculo.kmInicial} km`, 15, 85);
+                  docPdf.text(`Nivel de Combustible: ${formVehiculo.combustible}`, 15, 95);
+
+                  docPdf.setFontSize(14);
+                  docPdf.setTextColor(20, 20, 20);
+                  docPdf.text('Observaciones del Vehículo:', 15, 115);
+
+                  docPdf.setFontSize(11);
+                  docPdf.setTextColor(60, 60, 60);
+                  const splitObs = docPdf.splitTextToSize(formVehiculo.observaciones || 'Sin observaciones registradas.', 180);
+                  docPdf.text(splitObs, 15, 125);
+
+                  docPdf.save(`Check-in-${miMovil.replace(/\s+/g, '-')}-${Date.now()}.pdf`);
+                } catch (err) {
+                  console.error('Error generando PDF:', err);
+                }
+
                 setTechView('menu');
                 onSaveForm('CHECK-IN VEHÍCULO', miMovil, formVehiculo);
               }
@@ -1439,7 +1560,7 @@ function TecnicoDashboard({ tasks, onUpdateTask, onLogout, movilPasswords, movil
 
   // --- VISTA: TAREAS ASIGNADAS (El panel original de mapas y trabajos) ---
   return (
-    <div className="min-h-screen bg-slate-100 font-sans pb-32 w-full max-w-md mx-auto shadow-2xl relative animate-in slide-in-from-right print:hidden">
+    <div className="min-h-screen bg-gradient-to-br from-[#7441de]/80 to-[#ca28cc]/80 font-sans pb-32 w-full max-w-md mx-auto shadow-2xl relative animate-in slide-in-from-right print:hidden">
 
       {/* Modal Lector QR / Barcode */}
       {scanningField && (
@@ -1497,7 +1618,7 @@ function TecnicoDashboard({ tasks, onUpdateTask, onLogout, movilPasswords, movil
 
       <main className="p-4 flex flex-col gap-4 mt-2">
         {misTareas.length > 0 && (
-          <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-4 mb-2">
+          <div className="bg-white rounded-3xl shadow-sm border border-black p-4 mb-2">
             <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 mb-3">
               <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2"><MapIcon className="w-5 h-5 text-indigo-600" /> Mi Hoja de Ruta</h2>
               <div className="flex flex-wrap items-center gap-2">
@@ -1535,14 +1656,14 @@ function TecnicoDashboard({ tasks, onUpdateTask, onLogout, movilPasswords, movil
         )}
 
         {misTareas.length === 0 ? (
-          <div className="bg-white rounded-3xl p-8 text-center shadow-sm border border-slate-200 mt-10">
+          <div className="bg-white rounded-3xl p-8 text-center shadow-sm border border-black mt-10">
             <CheckCircle className="w-16 h-16 text-emerald-400 mx-auto mb-4" />
             <h2 className="text-xl font-bold text-slate-800 mb-2">¡Todo al día!</h2>
             <p className="text-slate-500 text-sm">No tienes tareas asignadas.</p>
           </div>
         ) : (
           misTareas.map((task) => (
-            <div key={task.id} className={`bg-white rounded-3xl shadow-sm border overflow-hidden transition-all duration-300 ${task.estado === 'EN CURSO' ? 'border-blue-400 ring-2 ring-blue-400 ring-offset-2' : 'border-slate-200'}`}>
+            <div key={task.id} className={`bg-white rounded-3xl shadow-sm border border-black overflow-hidden transition-all duration-300 ${task.estado === 'EN CURSO' ? 'ring-2 ring-blue-400 ring-offset-2' : ''}`}>
               <div className={`px-4 py-2.5 flex justify-between items-center shadow-sm ${getPriorityBadge(task.prioridad)}`}>
                 <span className="font-bold text-sm tracking-wide">{task.tipo}</span>
                 <span className="text-xs font-bold uppercase bg-black/20 px-2 py-0.5 rounded-lg backdrop-blur-sm">{task.prioridad}</span>
@@ -1746,6 +1867,42 @@ function TecnicoDashboard({ tasks, onUpdateTask, onLogout, movilPasswords, movil
           ))
         )}
 
+        {completedTasks.length > 0 && (
+          <div className="mt-6">
+            <button
+              onClick={() => setShowCompletedList(!showCompletedList)}
+              className="w-full bg-indigo-50 border border-indigo-200 p-4 rounded-2xl flex justify-between items-center transition-colors shadow-sm"
+              style={{ borderBottomLeftRadius: showCompletedList ? '0' : '1rem', borderBottomRightRadius: showCompletedList ? '0' : '1rem' }}
+            >
+              <div className="flex items-center gap-2">
+                <CheckCircle className="w-5 h-5 text-indigo-600" />
+                <span className="font-bold text-indigo-900">Tareas Finalizadas ({completedTasks.length})</span>
+              </div>
+              {showCompletedList ? <ChevronUp className="w-5 h-5 text-indigo-600" /> : <ChevronDown className="w-5 h-5 text-indigo-600" />}
+            </button>
+
+            {showCompletedList && (
+              <div className="bg-white border-x border-b border-indigo-100 rounded-b-2xl shadow-inner divide-y divide-slate-100 animate-in slide-in-from-top-2">
+                {completedTasks.map(task => (
+                  <div key={task.id} className="p-4 flex flex-col gap-1">
+                    <div className="flex justify-between items-start">
+                      <span className="font-bold text-slate-800 text-sm flex items-center gap-1.5">
+                        <User className="w-3.5 h-3.5 text-slate-400" /> {task.cliente}
+                      </span>
+                      <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">
+                        {task.tipo}
+                      </span>
+                    </div>
+                    <span className="text-xs text-slate-500 flex items-center gap-1.5 mt-1">
+                      <Hash className="w-3.5 h-3.5 text-slate-400" /> N° Abonado: {task.nroCliente}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="mt-6 mb-4">
           <div className="bg-slate-800 rounded-3xl p-6 text-center shadow-lg relative overflow-hidden">
             <h3 className="text-white font-bold text-lg mb-1 relative z-10">Cierre de Turno</h3>
@@ -1799,6 +1956,11 @@ export default function App() {
   const [formulariosGuardados, setFormulariosGuardados] = useState([]);
   const [showArchive, setShowArchive] = useState(false);
   const [selectedFormDetail, setSelectedFormDetail] = useState(null);
+  const [expandedArchiveDates, setExpandedArchiveDates] = useState({});
+
+  const toggleArchiveDate = (dateKey) => {
+    setExpandedArchiveDates(prev => ({ ...prev, [dateKey]: !prev[dateKey] }));
+  };
 
   // Estados de Configuración
   const [validAdminPassword, setValidAdminPassword] = useState('admin123');
@@ -2051,27 +2213,35 @@ export default function App() {
               ) : (
                 Object.keys(groupedForms).map(dateKey => (
                   <div key={dateKey} className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-                    <div className="bg-slate-100 px-5 py-3 border-b border-slate-200 font-bold text-slate-700 flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-indigo-500" />
-                      {dateKey}
+                    <div
+                      className="bg-slate-100 px-5 py-3 border-b border-slate-200 font-bold text-slate-700 flex items-center justify-between cursor-pointer hover:bg-slate-200 transition-colors"
+                      onClick={() => toggleArchiveDate(dateKey)}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-indigo-500" />
+                        {dateKey} <span className="text-xs font-normal text-slate-500 ml-2">({groupedForms[dateKey].length} registros)</span>
+                      </div>
+                      {expandedArchiveDates[dateKey] ? <ChevronUp className="w-5 h-5 text-slate-500" /> : <ChevronDown className="w-5 h-5 text-slate-500" />}
                     </div>
-                    <div className="divide-y divide-slate-100">
-                      {groupedForms[dateKey].map(form => (
-                        <div key={form.id} onClick={() => setSelectedFormDetail(form)} className="p-4 hover:bg-slate-50 transition-colors cursor-pointer flex justify-between items-center group">
-                          <div>
-                            <span className={`text-xs font-bold px-2 py-0.5 rounded-md uppercase tracking-wide ${form.tipo === 'CHECK-IN VEHÍCULO' ? 'bg-indigo-100 text-indigo-700' : form.tipo === 'CIERRE DE TURNO' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-700'}`}>
-                              {form.tipo}
-                            </span>
-                            <h3 className="font-bold text-slate-800 mt-2 flex items-center gap-2">
-                              {form.tipo === 'REPORTE GENERAL' ? <Monitor className="w-4 h-4 text-slate-400" /> : <Truck className="w-4 h-4 text-slate-400" />}
-                              {form.autor}
-                            </h3>
-                            <p className="text-xs text-slate-500 mt-1 flex items-center gap-1"><Clock className="w-3 h-3" /> {new Date(form.timestamp).toLocaleTimeString('es-AR')}</p>
+                    {expandedArchiveDates[dateKey] && (
+                      <div className="divide-y divide-slate-100">
+                        {groupedForms[dateKey].map(form => (
+                          <div key={form.id} onClick={() => setSelectedFormDetail(form)} className="p-4 hover:bg-slate-50 transition-colors cursor-pointer flex justify-between items-center group">
+                            <div>
+                              <span className={`text-xs font-bold px-2 py-0.5 rounded-md uppercase tracking-wide ${form.tipo === 'CHECK-IN VEHÍCULO' ? 'bg-indigo-100 text-indigo-700' : form.tipo === 'CIERRE DE TURNO' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-700'}`}>
+                                {form.tipo}
+                              </span>
+                              <h3 className="font-bold text-slate-800 mt-2 flex items-center gap-2">
+                                {form.tipo === 'REPORTE GENERAL' ? <Monitor className="w-4 h-4 text-slate-400" /> : <Truck className="w-4 h-4 text-slate-400" />}
+                                {form.autor}
+                              </h3>
+                              <p className="text-xs text-slate-500 mt-1 flex items-center gap-1"><Clock className="w-3 h-3" /> {new Date(form.timestamp).toLocaleTimeString('es-AR')}</p>
+                            </div>
+                            <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-indigo-500 transition-colors" />
                           </div>
-                          <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-indigo-500 transition-colors" />
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ))
               )}
